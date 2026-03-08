@@ -1081,10 +1081,13 @@ function doRegister(){
   window._fb.createUserWithEmailAndPassword(window._fb.auth,email,pass)
     .then(function(cred){
       var user=cred.user;
-      return Promise.all([
-        window._fb.updateProfile(user,{displayName:fullName}),
-        window._fb.set(window._fb.ref(window._fb.db,'users/'+user.uid+'/name'),fullName)
-      ]).then(function(){return user;});
+      // Update profile first (critical)
+      return window._fb.updateProfile(user,{displayName:fullName}).then(function(){
+        // Save to database in background (non-blocking) with 5 second timeout
+        var timeout=new Promise(function(resolve){setTimeout(function(){resolve();},5000);});
+        var dbWrite=window._fb.set(window._fb.ref(window._fb.db,'users/'+user.uid+'/name'),fullName).catch(function(){});
+        return Promise.race([dbWrite,timeout]).then(function(){return user;});
+      });
     })
     .then(function(user){
       // Sign out immediately — user must log in
@@ -1353,20 +1356,31 @@ function postComment(){
            ||'Student';
   var postBtn=document.querySelector('#comment-box-area .post-btn');
   if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';}
-  window._fb.push(window._fb.ref(window._fb.db,'forum'),{
-    author:name, text:text, timestamp:Date.now(), likes:0
-  }).then(function(){
+  
+  // Use Promise.race with 8 second timeout
+  var timeout=new Promise(function(resolve,reject){
+    setTimeout(function(){reject(new Error('Push timeout'));},8000);
+  });
+  
+  Promise.race([
+    window._fb.push(window._fb.ref(window._fb.db,'forum'),{
+      author:name, text:text, timestamp:Date.now(), likes:0
+    }),
+    timeout
+  ]).then(function(){
     inp.value='';
     var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500';
     window._forumPosted=true;
     saveProgress();
     renderProgress();
-    loadForumPosts();
     if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';}
     showToast('Comment posted!','success');
+    setTimeout(loadForumPosts,500);
   }).catch(function(err){
     if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';}
-    showToast('Post failed. Make sure Firebase rules are in Test Mode.','error');
+    var errMsg='Post failed.';
+    if(err.message==='Push timeout'){errMsg='Post timeout - check your Firebase rules or internet connection.';}
+    showToast(errMsg,'error');
     console.error('postComment:',err);
   });
 }
