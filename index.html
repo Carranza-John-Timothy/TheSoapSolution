@@ -350,106 +350,21 @@ nav.top-nav{
 .forum-logged-in button{background:none;border:1px solid #86efac;color:#166534;padding:.4rem .85rem;border-radius:7px;font-size:.78rem;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
 
 
-/* ============================================================
-   PROFILE PAGE
-============================================================ */
-.profile-user-card {
-  background: linear-gradient(135deg, var(--ink) 0%, #1e3a52 100%);
-  border-radius: 18px;
-  padding: clamp(1.5rem,4vw,2.2rem);
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-.profile-avatar {
-  width: 72px; height: 72px; min-width: 72px;
-  border-radius: 50%;
-  background: var(--teal);
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 2rem; font-weight: 700;
-  box-shadow: 0 0 0 4px rgba(20,184,166,.3);
-}
-.profile-user-info h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.3rem,4vw,1.7rem);
-  color: #fff; margin-bottom: .2rem;
-}
-.profile-email-text { color: #94a3b8; font-size: .85rem; margin-bottom: .75rem; }
-.profile-signout-btn {
-  background: rgba(239,68,68,.15); color: #fca5a5;
-  border: 1px solid rgba(239,68,68,.3);
-  padding: .4rem .95rem; border-radius: 7px;
-  font-size: .78rem; font-weight: 600; cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  transition: all .18s;
-}
-.profile-signout-btn:hover { background: rgba(239,68,68,.28); }
+/* Toast notifications */
+.toast-container { position:fixed; bottom:calc(var(--bnav-h) + .75rem); right:1rem; z-index:800; display:flex; flex-direction:column; gap:.5rem; pointer-events:none; }
+@media(min-width:641px){ .toast-container { bottom:1.25rem; } }
+.toast { background:var(--ink); color:#fff; padding:.75rem 1.1rem; border-radius:10px; font-size:.84rem; font-weight:500; max-width:280px; box-shadow:0 8px 24px rgba(0,0,0,.3); animation:toastIn .3s ease; pointer-events:all; display:flex; align-items:center; gap:.5rem; }
+.toast.success { border-left:3px solid var(--green); }
+.toast.error   { border-left:3px solid var(--red); }
+.toast.info    { border-left:3px solid var(--teal-light); }
+@keyframes toastIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes toastOut { to{opacity:0;transform:translateY(12px)} }
 
-.profile-stats-row {
-  display: grid; grid-template-columns: repeat(4,1fr);
-  gap: .85rem; margin-bottom: 1.5rem;
-}
-.profile-stat-box {
-  background: #fff; border: 1px solid var(--border);
-  border-radius: 12px; padding: 1rem .75rem; text-align: center;
-}
-.profile-stat-num {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(1.3rem,4vw,1.7rem);
-  color: var(--teal); font-weight: 700;
-}
-.profile-stat-label { font-size: .7rem; color: var(--muted); margin-top: .1rem; }
 
-.profile-section-block {
-  background: #fff; border: 1px solid var(--border);
-  border-radius: 14px; padding: 1.4rem 1.5rem;
-  margin-bottom: 1.1rem;
-}
-.profile-block-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.15rem; margin-bottom: 1rem; color: var(--ink);
-}
-
-.profile-badges-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(150px,100%),1fr));
-  gap: .85rem;
-}
-.profile-badge-card {
-  border: 1.5px solid var(--border); border-radius: 11px;
-  padding: 1rem .85rem; text-align: center;
-  background: var(--cream); opacity: .45;
-  transition: all .2s;
-}
-.profile-badge-card.earned {
-  opacity: 1; border-color: var(--teal);
-  background: linear-gradient(135deg,#f0fdfa,#e0f2fe);
-  box-shadow: 0 4px 16px rgba(13,148,136,.12);
-}
-.pb-icon { font-size: 1.8rem; margin-bottom: .35rem; }
-.pb-name { font-size: .8rem; font-weight: 700; color: var(--ink); margin-bottom: .18rem; }
-.pb-desc { font-size: .7rem; color: var(--muted); line-height: 1.4; }
-
-.profile-quiz-breakdown { display: flex; flex-direction: column; gap: .6rem; }
-.pqb-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .7rem 1rem; background: var(--cream);
-  border-radius: 9px; border: 1px solid var(--border);
-}
-.pqb-label { font-size: .87rem; color: var(--ink); }
-.pqb-score {
-  font-weight: 700; font-size: .9rem; color: var(--teal);
-  background: var(--sky); padding: .2rem .65rem; border-radius: 20px;
-}
-
-@media(max-width:640px) {
-  .profile-stats-row { grid-template-columns: repeat(2,1fr); }
-  .profile-user-card { flex-direction: column; text-align: center; }
-}
+.scroll-top { position:fixed; bottom:calc(var(--bnav-h) + 4.5rem); right:1rem; z-index:400; width:40px; height:40px; border-radius:50%; background:var(--teal); color:#fff; border:none; font-size:1.1rem; cursor:pointer; display:none; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,.2); transition:all .2s; }
+.scroll-top.visible { display:flex; }
+.scroll-top:hover { background:var(--teal-dark); transform:translateY(-2px); }
+@media(min-width:641px){ .scroll-top { bottom:4.5rem; } }
 
 /* ═══ FOOTER ═══ */
 footer{background:var(--ink);color:#475569;text-align:center;padding:1.75rem 1rem;font-size:clamp(.73rem,2vw,.8rem);line-height:1.9}
@@ -863,8 +778,11 @@ footer strong{color:var(--teal-light)}
 
     <div class="comment-box" id="comment-box-area">
       <h3>💬 Share Your Thoughts</h3>
-      <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, or add a tip… (Enter to post, Shift+Enter for new line)"></textarea>
-      <button onclick="postComment()">Post Comment</button>
+      <textarea id="comment-input" maxlength="500" placeholder="Share a clinical experience, ask a question, or add a tip… (Enter to post, Shift+Enter for new line)"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem">
+        <span id="char-count" style="font-size:.74rem;color:var(--muted)">0/500</span>
+        <button onclick="postComment()" style="width:auto;padding:.7rem 1.5rem">Post Comment</button>
+      </div>
     </div>
     <div id="guest-comment-wall" style="display:none;background:var(--sky);border:1px solid #bae6fd;border-radius:12px;padding:1.2rem;text-align:center;margin-top:1.5rem">
       <p style="color:var(--teal-dark);font-size:.9rem;margin-bottom:.75rem">Sign in to read and post in the discussion forum.</p>
@@ -879,109 +797,22 @@ footer strong{color:var(--teal-light)}
 <div id="profile" class="page">
   <div class="section">
     <div class="tag">Your Account</div>
-    <h2 class="section-title">My Profile</h2>
-    <p class="section-sub">Track your learning progress, earned badges, and quiz scores.</p>
+    <h2 class="section-title">Profile</h2>
+    <p class="section-sub">View your account details and learning progress.</p>
 
-    <!-- Guest state -->
     <div class="forum-login-prompt" id="profile-guest">
-      <p>🔒 Sign in to view your profile and track your learning progress.</p>
+      <p>🔒 Sign in to view your profile and saved progress.</p>
       <button onclick="openAuth()">Sign In / Register</button>
     </div>
 
-    <!-- Logged-in state -->
-    <div id="profile-card" style="display:none">
-
-      <!-- User card -->
-      <div class="profile-user-card">
-        <div class="profile-avatar" id="profile-avatar-big">S</div>
-        <div class="profile-user-info">
-          <h3 id="profile-name">Student</h3>
-          <p id="profile-email" class="profile-email-text"></p>
-          <button class="profile-signout-btn" onclick="doLogout()">Sign Out</button>
-        </div>
-      </div>
-
-      <!-- Stats row -->
-      <div class="profile-stats-row">
-        <div class="profile-stat-box">
-          <div class="profile-stat-num" id="pstat-modules">0/3</div>
-          <div class="profile-stat-label">Modules</div>
-        </div>
-        <div class="profile-stat-box">
-          <div class="profile-stat-num" id="pstat-quiz">0/15</div>
-          <div class="profile-stat-label">Quiz Score</div>
-        </div>
-        <div class="profile-stat-box">
-          <div class="profile-stat-num" id="pstat-badges">0/5</div>
-          <div class="profile-stat-label">Badges</div>
-        </div>
-        <div class="profile-stat-box">
-          <div class="profile-stat-num" id="pstat-pct">0%</div>
-          <div class="profile-stat-label">Overall</div>
-        </div>
-      </div>
-
-      <!-- Progress bars -->
-      <div class="profile-section-block">
-        <h4 class="profile-block-title">Learning Progress</h4>
-        <div class="prog-label">Modules Completed: <span id="profile-modules-label">0/3</span></div>
-        <div class="prog-track" style="margin-bottom:1rem"><div class="prog-fill" id="profile-modules" style="width:0%"></div></div>
-        <div class="prog-label">Quiz Progress: <span id="profile-quiz-label">0/15</span></div>
-        <div class="prog-track"><div class="prog-fill" id="profile-quiz" style="width:0%"></div></div>
-      </div>
-
-      <!-- Badges -->
-      <div class="profile-section-block">
-        <h4 class="profile-block-title">Earned Badges</h4>
-        <div class="profile-badges-grid">
-          <div class="profile-badge-card" id="pb-explorer">
-            <div class="pb-icon">🥇</div>
-            <div class="pb-name">Module Explorer</div>
-            <div class="pb-desc">Visit your first module</div>
-          </div>
-          <div class="profile-badge-card" id="pb-hygiene">
-            <div class="pb-icon">🧼</div>
-            <div class="pb-name">Hygiene Advocate</div>
-            <div class="pb-desc">Complete all 3 modules</div>
-          </div>
-          <div class="profile-badge-card" id="pb-game">
-            <div class="pb-icon">🎮</div>
-            <div class="pb-name">Game Master</div>
-            <div class="pb-desc">Complete the drag & drop game</div>
-          </div>
-          <div class="profile-badge-card" id="pb-quiz">
-            <div class="pb-icon">🏅</div>
-            <div class="pb-name">Quiz Champion</div>
-            <div class="pb-desc">Finish all 3 quiz sets</div>
-          </div>
-          <div class="profile-badge-card" id="pb-contrib">
-            <div class="pb-icon">⭐</div>
-            <div class="pb-name">Top Contributor</div>
-            <div class="pb-desc">Post in the forum</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quiz scores breakdown -->
-      <div class="profile-section-block">
-        <h4 class="profile-block-title">Quiz Score Breakdown</h4>
-        <div class="profile-quiz-breakdown">
-          <div class="pqb-row">
-            <span class="pqb-label">🧼 Set 1 — Soap & Water</span>
-            <span class="pqb-score" id="pqb-s1">—</span>
-          </div>
-          <div class="pqb-row">
-            <span class="pqb-label">🧴 Set 2 — Alcohol Rub</span>
-            <span class="pqb-score" id="pqb-s2">—</span>
-          </div>
-          <div class="pqb-row">
-            <span class="pqb-label">⏱ Set 3 — When to Perform</span>
-            <span class="pqb-score" id="pqb-s3">—</span>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- end profile-card -->
+    <div class="progress-box" id="profile-card" style="display:none">
+      <h2>👤 <span id="profile-name">Student</span></h2>
+      <p style="margin-bottom:1rem;color:#cbd5f5">Email: <span id="profile-email"></span></p>
+      <div class="prog-label">Modules Viewed: <span id="profile-modules-label">0/3</span></div>
+      <div class="prog-track"><div class="prog-fill" id="profile-modules" style="width:0%"></div></div>
+      <div class="prog-label">Quiz Progress: <span id="profile-quiz-label">0/15</span></div>
+      <div class="prog-track"><div class="prog-fill" id="profile-quiz" style="width:0%"></div></div>
+    </div>
   </div>
 </div>
 
@@ -1019,6 +850,8 @@ footer strong{color:var(--teal-light)}
   <div id="fs-emoji" class="fs-emoji" style="display:none"></div>
 </div>
 
+<button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+<div class="toast-container" id="toast-container"></div>
 <footer>
   <p>CleanHands Educational Portal · NCM 110L – Nursing Informatics Laboratory</p>
   <p>College of Health Sciences · Prepared by <strong>Group 5 – BSN 2205</strong> · Adviser: Cynthia P. Hernandez, RN, MAN</p>
@@ -1058,18 +891,34 @@ function goTo(id) { SP(id); }
 // ============================================================
 // AUTH UI
 // ============================================================
+function applyProfileData(name, email) {
+  window._currentUserName  = name || window._currentUserName  || 'Student';
+  window._currentUserEmail = email || window._currentUserEmail || '';
+  var pn  = document.getElementById('profile-name');
+  var pe  = document.getElementById('profile-email');
+  var pab = document.getElementById('profile-avatar-big');
+  if (pn)  pn.textContent  = window._currentUserName;
+  if (pe)  pe.textContent  = window._currentUserEmail;
+  if (pab) pab.textContent = window._currentUserName[0].toUpperCase();
+  renderProgress();
+}
+
 function updateAuthUI(user) {
   try {
-    var btn = document.getElementById('nav-auth-btn');
+    var btn  = document.getElementById('nav-auth-btn');
     var chip = document.getElementById('user-chip');
 
     if (user) {
-      // Use email prefix immediately — don't wait for DB
-      var name = user.displayName || (user.email ? user.email.split('@')[0] : 'Student');
+      // Resolve name immediately from auth object — no DB wait
+      var name  = user.displayName || (user.email ? user.email.split('@')[0] : 'Student');
       var email = user.email || '';
 
-      // Nav chip — instant update
-      if (btn) btn.style.display = 'none';
+      // Cache right away so postComment and others can use it instantly
+      window._currentUserName  = name;
+      window._currentUserEmail = email;
+
+      // Nav chip
+      if (btn)  btn.style.display = 'none';
       if (chip) chip.classList.add('show');
       var av = document.getElementById('user-av');
       var nm = document.getElementById('user-nm');
@@ -1078,27 +927,28 @@ function updateAuthUI(user) {
 
       // Forum
       var guestPrompt = document.getElementById('forum-guest-prompt');
-      var userBar = document.getElementById('forum-user-bar');
-      var commentBox = document.getElementById('comment-box-area');
-      var guestWall = document.getElementById('guest-comment-wall');
+      var userBar     = document.getElementById('forum-user-bar');
+      var commentBox  = document.getElementById('comment-box-area');
+      var guestWall   = document.getElementById('guest-comment-wall');
       if (guestPrompt) guestPrompt.style.display = 'none';
-      if (userBar) userBar.classList.add('show');
+      if (userBar)     userBar.classList.add('show');
       var fn = document.getElementById('forum-user-name');
       if (fn) fn.textContent = name;
       if (commentBox) commentBox.style.display = '';
-      if (guestWall) guestWall.style.display = 'none';
+      if (guestWall)  guestWall.style.display  = 'none';
 
-      // Profile card — instant
+      // Profile card — show immediately
       var profileGuest = document.getElementById('profile-guest');
-      var profileCard = document.getElementById('profile-card');
+      var profileCard  = document.getElementById('profile-card');
       if (profileGuest) profileGuest.style.display = 'none';
-      if (profileCard) profileCard.style.display = '';
+      if (profileCard)  profileCard.style.display  = '';
       applyProfileData(name, email);
 
-      // Refine name from DB then update again
+      // Then refine with DB-stored display name
       if (window._firebaseReady) {
         getUserDisplayName(user.uid).then(function(resolvedName) {
-          if (resolvedName && resolvedName !== name) {
+          if (resolvedName && resolvedName !== 'Student') {
+            window._currentUserName = resolvedName;
             if (av) av.textContent = resolvedName[0].toUpperCase();
             if (nm) nm.textContent = resolvedName;
             if (fn) fn.textContent = resolvedName;
@@ -1111,32 +961,24 @@ function updateAuthUI(user) {
       }
 
     } else {
-      if (btn) { btn.style.display = ''; btn.textContent = 'Sign In'; }
+      window._currentUserName  = null;
+      window._currentUserEmail = null;
+      if (btn)  { btn.style.display = ''; btn.textContent = 'Sign In'; }
       if (chip) chip.classList.remove('show');
-      var gp2 = document.getElementById('forum-guest-prompt');
-      var ub2 = document.getElementById('forum-user-bar');
-      var cb2 = document.getElementById('comment-box-area');
-      var gw2 = document.getElementById('guest-comment-wall');
-      var pg2 = document.getElementById('profile-guest');
-      var pc2 = document.getElementById('profile-card');
-      if (gp2) gp2.style.display = '';
-      if (ub2) ub2.classList.remove('show');
-      if (cb2) cb2.style.display = 'none';
-      if (gw2) gw2.style.display = '';
-      if (pg2) pg2.style.display = '';
-      if (pc2) pc2.style.display = 'none';
+      var gp = document.getElementById('forum-guest-prompt');
+      var ub = document.getElementById('forum-user-bar');
+      var cb = document.getElementById('comment-box-area');
+      var gw = document.getElementById('guest-comment-wall');
+      var pg = document.getElementById('profile-guest');
+      var pc = document.getElementById('profile-card');
+      if (gp) gp.style.display = '';
+      if (ub) ub.classList.remove('show');
+      if (cb) cb.style.display = 'none';
+      if (gw) gw.style.display = '';
+      if (pg) pg.style.display = '';
+      if (pc) pc.style.display = 'none';
     }
   } catch(e) { console.warn('updateAuthUI error:', e); }
-}
-
-function applyProfileData(name, email) {
-  var pn = document.getElementById('profile-name');
-  var pe = document.getElementById('profile-email');
-  var pab = document.getElementById('profile-avatar-big');
-  if (pn) pn.textContent = name;
-  if (pe) pe.textContent = email;
-  if (pab) pab.textContent = name[0].toUpperCase();
-  renderProgress();
 }
 
 function openAuth() {
@@ -1168,15 +1010,16 @@ function doLogin() {
     .then(function(result) {
       var user = result.user;
       // Immediate visual confirmation
-      err.style.cssText = 'color:#16a34a;background:#dcfce7;border-radius:8px;padding:.6rem .9rem;font-weight:600';
-      err.textContent = '✅ Welcome back!';
+      err.style.color = '#16a34a';
+      err.textContent = 'Signed in successfully!';
+      // Proactively update UI in case auth listener is delayed
       if (typeof updateAuthUI === 'function') updateAuthUI(user);
       setTimeout(function() {
-        err.style.cssText = '';
         err.textContent = '';
         closeAuth();
-        SP('profile');
-      }, 1000);
+        // Take user straight to forum where login status is obvious
+        SP('forum');
+      }, 900);
     })
     .catch(function(e) {
       if (e.code === 'auth/user-not-found') err.textContent = 'No account found. Please register.';
@@ -1209,15 +1052,16 @@ function doRegister() {
     })
     .then(function(user) {
       // Clear any old error and show a clear success confirmation
-      err.style.cssText = 'color:#16a34a;background:#dcfce7;border-radius:8px;padding:.6rem .9rem;font-weight:600';
-      err.textContent = '✅ Account created! Welcome to TheSoapSolution.';
+      err.style.color = '#16a34a';
+      err.textContent = 'Account created successfully!';
+      // Proactively update UI right away
       if (typeof updateAuthUI === 'function') updateAuthUI(user);
       setTimeout(function() {
-        err.style.cssText = '';
         err.textContent = '';
         closeAuth();
-        SP('profile');
-      }, 1500);
+        // Go straight to the forum so the logged‑in state is visible
+        SP('forum');
+      }, 1000);
     })
     .catch(function(e) {
       err.style.color = '';
@@ -1247,84 +1091,76 @@ function loadUserProgress(uid) {
   var db = window._fb.db, ref = window._fb.ref, onValue = window._fb.onValue;
   onValue(ref(db, 'users/' + uid + '/progress'), function(snap) {
     var data = snap.val() || {};
+
     modulesVisited = {};
     var mods = data.modules || [];
     for (var i = 0; i < mods.length; i++) modulesVisited[mods[i]] = true;
+
     quizSetsCompleted = {};
     var sets = data.quizSets || [];
     for (var j = 0; j < sets.length; j++) quizSetsCompleted[sets[j]] = true;
+
+    // Restore quiz scores
+    if (data.s1 !== undefined && data.s1 >= 0) setScores.s1 = data.s1;
+    if (data.s2 !== undefined && data.s2 >= 0) setScores.s2 = data.s2;
+    if (data.s3 !== undefined && data.s3 >= 0) setScores.s3 = data.s3;
+
+    // Restore game/forum flags
+    window._gameCompleted = data.gameCompleted === 1;
+    window._forumPosted   = data.forumPosted === 1;
+
     renderProgress();
+    applyProfileData(
+      window._currentUserName || 'Student',
+      window._currentUserEmail || ''
+    );
   });
 }
 
 function saveProgress() {
   if (!window._firebaseReady || !window._currentUser) return;
   var uid = window._currentUser.uid;
-  window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/progress'), {
+  var data = {
     modules: Object.keys(modulesVisited),
-    quizSets: Object.keys(quizSetsCompleted)
-  });
+    quizSets: Object.keys(quizSetsCompleted),
+    s1: setScores.s1 !== undefined ? setScores.s1 : -1,
+    s2: setScores.s2 !== undefined ? setScores.s2 : -1,
+    s3: setScores.s3 !== undefined ? setScores.s3 : -1,
+    gameCompleted: window._gameCompleted ? 1 : 0,
+    forumPosted: window._forumPosted ? 1 : 0
+  };
+  window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/progress'), data);
 }
 
 function renderProgress() {
   var mCount = Object.keys(modulesVisited).length;
-  var qSets  = Object.keys(quizSetsCompleted).length;
-  var qCount = qSets * 5;
-  var gameD  = !!window._gameCompleted;
-  var contribD = !!window._forumPosted;
-  var earnedBadges = (mCount>=1?1:0)+(mCount>=3?1:0)+(gameD?1:0)+(qSets>=3?1:0)+(contribD?1:0);
-  var overallPct = Math.round(((mCount/3)*40 + (qCount/15)*60) / 1);
-  overallPct = Math.min(100, Math.round((mCount/3 * 40) + (qCount/15 * 60)));
+  var qCount = Object.keys(quizSetsCompleted).length * 5;
+  var ml = document.getElementById('prog-modules-label');
+  var mp = document.getElementById('prog-modules');
+  var ql = document.getElementById('prog-quiz-label');
+  var qp = document.getElementById('prog-quiz');
+  var pml = document.getElementById('profile-modules-label');
+  var pmp = document.getElementById('profile-modules');
+  var pql = document.getElementById('profile-quiz-label');
+  var pqp = document.getElementById('profile-quiz');
+  if (ml) ml.textContent = mCount + '/3';
+  if (mp) mp.style.width = Math.round(mCount / 3 * 100) + '%';
+  if (ql) ql.textContent = qCount + '/15';
+  if (qp) qp.style.width = Math.round(qCount / 15 * 100) + '%';
+  if (pml) pml.textContent = mCount + '/3';
+  if (pmp) pmp.style.width = Math.round(mCount / 3 * 100) + '%';
+  if (pql) pql.textContent = qCount + '/15';
+  if (pqp) pqp.style.width = Math.round(qCount / 15 * 100) + '%';
 
-  // Forum progress bar
-  function setEl(id, val, isWidth) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    if (isWidth) el.style.width = val; else el.textContent = val;
-  }
-  setEl('prog-modules-label', mCount + '/3');
-  setEl('prog-modules', Math.round(mCount/3*100)+'%', true);
-  setEl('prog-quiz-label', qCount + '/15');
-  setEl('prog-quiz', Math.round(qCount/15*100)+'%', true);
-
-  // Profile progress bars
-  setEl('profile-modules-label', mCount + '/3');
-  setEl('profile-modules', Math.round(mCount/3*100)+'%', true);
-  setEl('profile-quiz-label', qCount + '/15');
-  setEl('profile-quiz', Math.round(qCount/15*100)+'%', true);
-
-  // Profile stat boxes
-  setEl('pstat-modules', mCount + '/3');
-  setEl('pstat-quiz', qCount + '/15');
-  setEl('pstat-badges', earnedBadges + '/5');
-  setEl('pstat-pct', overallPct + '%');
-
-  // Quiz score breakdown on profile
-  setEl('pqb-s1', setScores.s1 !== undefined ? setScores.s1 + '/5' : '—');
-  setEl('pqb-s2', setScores.s2 !== undefined ? setScores.s2 + '/5' : '—');
-  setEl('pqb-s3', setScores.s3 !== undefined ? setScores.s3 + '/5' : '—');
-
-  // Forum badges (old system)
   function setBadge(id, earned) {
     var el = document.getElementById(id);
     if (el) { if (earned) el.classList.add('earned'); else el.classList.remove('earned'); }
   }
   setBadge('badge-explorer', mCount >= 1);
   setBadge('badge-hygiene', mCount >= 3);
-  setBadge('badge-game', gameD);
-  setBadge('badge-quiz', qSets >= 3);
-  setBadge('badge-contrib', contribD);
-
-  // Profile badges
-  function setPBadge(id, earned) {
-    var el = document.getElementById(id);
-    if (el) { if (earned) el.classList.add('earned'); else el.classList.remove('earned'); }
-  }
-  setPBadge('pb-explorer', mCount >= 1);
-  setPBadge('pb-hygiene', mCount >= 3);
-  setPBadge('pb-game', gameD);
-  setPBadge('pb-quiz', qSets >= 3);
-  setPBadge('pb-contrib', contribD);
+  setBadge('badge-game', !!window._gameCompleted);
+  setBadge('badge-quiz', Object.keys(quizSetsCompleted).length >= 3);
+  setBadge('badge-contrib', !!window._forumPosted);
 }
 
 // ============================================================
@@ -1437,7 +1273,7 @@ function checkDND(game) {
   if (filled < total) { fb.textContent = 'Please fill all ' + total + ' slots before checking.'; return; }
   if (correct === total) {
     fb.textContent = 'Perfect! All ' + total + ' steps matched correctly!';
-    window._gameCompleted = true; saveProgress(); renderProgress();
+    window._gameCompleted = true; saveProgress(); renderProgress(); showToast('Game Master badge earned!', 'success');
   } else {
     fb.textContent = correct + '/' + total + ' correct. Red slots need fixing.';
   }
@@ -1551,6 +1387,7 @@ function submitSet(setId) {
   if (subBtn) subBtn.style.display = 'none';
   sc.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  showToast('Set ' + setId.replace('s','') + ' submitted! Score: ' + score + '/5', score === 5 ? 'success' : 'info');
   if (setId === 's3') {
     var total = (setScores.s1 || 0) + (setScores.s2 || 0) + (setScores.s3 || 0);
     var fd = document.getElementById('final-score-display');
@@ -1626,10 +1463,11 @@ function loadLeaderboard() {
     var html = '';
     for (var i = 0; i < entries.length; i++) {
       var e = entries[i];
-      var medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-      var rankLabel = i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : (i + 1) + 'th';
-      html += '<div class="lb-row"><div class="lb-rank">' + rankLabel + '</div>';
-      html += '<div class="lb-name">' + (e.name || 'Anonymous') + '</div>';
+      var rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+      var isMe = window._currentUserName && e.name === window._currentUserName;
+      var rowStyle = isMe ? ' style="background:linear-gradient(90deg,#f0fdfa,#e0f2fe);border:1.5px solid var(--teal)"' : '';
+      html += '<div class="lb-row"' + rowStyle + '><div class="lb-rank">' + rankLabel + '</div>';
+      html += '<div class="lb-name">' + (e.name || 'Anonymous') + (isMe ? ' <span style="font-size:.7rem;color:var(--teal);font-weight:700">(You)</span>' : '') + '</div>';
       html += '<div><div class="lb-score">' + e.total + '/15</div>';
       html += '<div class="lb-set">' + Math.round(e.total / 15 * 100) + '%</div></div></div>';
     }
@@ -1686,21 +1524,27 @@ function postComment() {
   if (!text) return;
   if (!window._currentUser) { openAuth(); return; }
   if (!window._firebaseReady) {
-    alert('Unable to connect to the forum right now. Please try again later.');
+    showToast('Unable to connect. Check your internet.', 'error'); return;
     return;
   }
-  getUserDisplayName(window._currentUser.uid).then(function(name) {
-    var db = window._fb.db, ref = window._fb.ref, push = window._fb.push;
-    push(ref(db, 'forum'), { author: name, text: text, timestamp: Date.now(), likes: 0 })
-      .then(function() {
-        inp.value = '';
-        window._forumPosted = true;
-        saveProgress(); renderProgress();
-      })
-      .catch(function(e) {
-        alert('Could not post comment. Please try again.\n\n' + (e && e.message ? e.message : e));
-      });
-  });
+  // Use cached name — no async DB read needed
+  var name = window._currentUserName
+    || window._currentUser.displayName
+    || (window._currentUser.email ? window._currentUser.email.split('@')[0] : 'Student');
+  var db = window._fb.db, ref = window._fb.ref, push = window._fb.push;
+  var postBtn = document.querySelector('#comment-box-area button');
+  if (postBtn) { postBtn.disabled = true; postBtn.textContent = 'Posting...'; }
+  push(ref(db, 'forum'), { author: name, text: text, timestamp: Date.now(), likes: 0 })
+    .then(function() {
+      inp.value = '';
+      window._forumPosted = true;
+      saveProgress(); renderProgress();
+      if (postBtn) { postBtn.disabled = false; postBtn.textContent = 'Post Comment'; }
+    })
+    .catch(function(e) {
+      if (postBtn) { postBtn.disabled = false; postBtn.textContent = 'Post Comment'; }
+      showToast('Could not post. Check Firebase rules.', 'error');
+    });
 }
 
 // ============================================================
@@ -1747,7 +1591,55 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   setTimeout(loadLeaderboard, 1200);
+  var ci = document.getElementById('comment-input');
+  if (ci) {
+    ci.addEventListener('input', function() {
+      var cc = document.getElementById('char-count');
+      if (cc) cc.textContent = ci.value.length + '/500';
+    });
+  }
 });
+
+// Override SP to track module page visits and mark soap as visited
+// when the Modules page is opened (since soap is the default tab)
+var _origSP = SP;
+SP = function(id) {
+  _origSP(id);
+  if (id === 'modules') {
+    // soap is the default active tab — count it immediately
+    if (!modulesVisited['soap']) {
+      modulesVisited['soap'] = true;
+      saveProgress();
+      renderProgress();
+    }
+  }
+};
 </script>
+
+// ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+function showToast(msg, type, duration) {
+  type = type || 'info';
+  duration = duration || 3000;
+  var container = document.getElementById('toast-container');
+  if (!container) return;
+  var t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(function() {
+    t.style.animation = 'toastOut .3s ease forwards';
+    setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+  }, duration);
+}
+
+
+// Scroll to top button
+window.addEventListener('scroll', function() {
+  var btn = document.getElementById('scroll-top-btn');
+  if (btn) btn.classList.toggle('visible', window.scrollY > 400);
+});
+
 </body>
 </html>
