@@ -877,34 +877,39 @@ function updateAuthUI(user) {
     var userBar = document.getElementById('forum-user-bar');
     var commentBox = document.getElementById('comment-box-area');
     var guestWall = document.getElementById('guest-comment-wall');
-    var profileGuest = document.getElementById('profile-guest');
-    var profileCard = document.getElementById('profile-card');
-    var profileName = document.getElementById('profile-name');
-    var profileEmail = document.getElementById('profile-email');
 
     if (user) {
-      var baseName = user.displayName || (user.email ? user.email.split('@')[0] : 'Student');
-      var email = user.email || '';
-      getUserDisplayName(user.uid).then(function(resolvedName) {
-        var name = resolvedName || baseName;
-        if (btn) btn.style.display = 'none';
-        if (chip) chip.classList.add('show');
-        var av = document.getElementById('user-av');
-        var nm = document.getElementById('user-nm');
-        if (av && name) av.textContent = name[0].toUpperCase();
-        if (nm) nm.textContent = name;
-        if (guestPrompt) guestPrompt.style.display = 'none';
-        if (userBar) userBar.classList.add('show');
-        var fn = document.getElementById('forum-user-name');
-        if (fn) fn.textContent = name;
-        if (commentBox) commentBox.style.display = '';
-        if (guestWall) guestWall.style.display = 'none';
-        if (profileGuest) profileGuest.style.display = 'none';
-        if (profileCard) profileCard.style.display = '';
-        if (profileName) profileName.textContent = name;
-        if (profileEmail) profileEmail.textContent = email;
+      // Use whatever name we have immediately - don't wait for DB
+      var name = user.displayName || (user.email ? user.email.split('@')[0] : 'Student');
+
+      // Update nav immediately
+      if (btn) btn.style.display = 'none';
+      if (chip) chip.classList.add('show');
+      var av = document.getElementById('user-av');
+      var nm = document.getElementById('user-nm');
+      if (av) av.textContent = name[0].toUpperCase();
+      if (nm) nm.textContent = name;
+      if (guestPrompt) guestPrompt.style.display = 'none';
+      if (userBar) userBar.classList.add('show');
+      var fn = document.getElementById('forum-user-name');
+      if (fn) fn.textContent = name;
+      if (commentBox) commentBox.style.display = '';
+      if (guestWall) guestWall.style.display = 'none';
+
+      // Then try to get the DB name and refine if different
+      if (window._firebaseReady) {
+        getUserDisplayName(user.uid).then(function(resolvedName) {
+          if (resolvedName && resolvedName !== name) {
+            if (av) av.textContent = resolvedName[0].toUpperCase();
+            if (nm) nm.textContent = resolvedName;
+            if (fn) fn.textContent = resolvedName;
+          }
+          loadForumPosts();
+        });
+      } else {
         loadForumPosts();
-      });
+      }
+
     } else {
       if (btn) { btn.style.display = ''; btn.textContent = 'Sign In'; }
       if (chip) chip.classList.remove('show');
@@ -912,8 +917,6 @@ function updateAuthUI(user) {
       if (userBar) userBar.classList.remove('show');
       if (commentBox) commentBox.style.display = 'none';
       if (guestWall) guestWall.style.display = '';
-      if (profileGuest) profileGuest.style.display = '';
-      if (profileCard) profileCard.style.display = 'none';
     }
   } catch(e) { console.warn('updateAuthUI error:', e); }
 }
