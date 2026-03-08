@@ -944,9 +944,19 @@ function doLogin() {
   err.style.color = ''; // reset to error color
   err.textContent = 'Signing in...';
   window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass)
-    .then(function() {
-      err.textContent = '';
-      closeAuth();
+    .then(function(result) {
+      var user = result.user;
+      // Immediate visual confirmation
+      err.style.color = '#16a34a';
+      err.textContent = 'Signed in successfully!';
+      // Proactively update UI in case auth listener is delayed
+      if (typeof updateAuthUI === 'function') updateAuthUI(user);
+      setTimeout(function() {
+        err.textContent = '';
+        closeAuth();
+        // Take user straight to forum where login status is obvious
+        SP('forum');
+      }, 900);
     })
     .catch(function(e) {
       if (e.code === 'auth/user-not-found') err.textContent = 'No account found. Please register.';
@@ -967,34 +977,28 @@ function doRegister() {
   err.textContent = 'Creating account...';
   window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass)
     .then(function(result) {
-      var uid = result.user.uid;
       var user = result.user;
+      var uid = user.uid;
       var tasks = [];
       tasks.push(window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/name'), name));
       if (window._fb.updateProfile) {
         tasks.push(window._fb.updateProfile(user, { displayName: name }).catch(function(){}));
       }
-      return Promise.all(tasks);
+      // Keep the user logged in and return the user for the next step
+      return Promise.all(tasks).then(function() { return user; });
     })
-    .then(function() {
-      // Immediately sign out so the user explicitly logs in next
-      if (window._fb && window._fb.auth && window._fb.signOut) {
-        window._fb.signOut(window._fb.auth).catch(function(){});
-      }
-      // Prefill login email
-      var loginEmail = document.getElementById('login-email');
-      if (loginEmail) loginEmail.value = email;
-      // Switch to login tab
-      var loginTabBtn = document.querySelector('.modal-tab[data-tab="login"]');
-      if (loginTabBtn) switchAuth('login', loginTabBtn);
-      // Show success message on login panel
-      var loginErr = document.getElementById('login-err');
-      if (loginErr) {
-        loginErr.style.color = '#16a34a';
-        loginErr.textContent = 'Account created! You can now sign in.';
-      }
-      // Clear register message
-      err.textContent = '';
+    .then(function(user) {
+      // Clear any old error and show a clear success confirmation
+      err.style.color = '#16a34a';
+      err.textContent = 'Account created successfully!';
+      // Proactively update UI right away
+      if (typeof updateAuthUI === 'function') updateAuthUI(user);
+      setTimeout(function() {
+        err.textContent = '';
+        closeAuth();
+        // Go straight to the forum so the logged‑in state is visible
+        SP('forum');
+      }, 1000);
     })
     .catch(function(e) {
       err.style.color = '';
