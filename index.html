@@ -12,7 +12,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, push, onValue, query, orderByChild, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
   const firebaseConfig = {
     apiKey: "AIzaSyCqduBvxgj8sYoWBmRvdOrACGoxbmHW5Dc",
     authDomain: "ncm-110l.firebaseapp.com",
@@ -22,40 +21,27 @@
     messagingSenderId: "64058492601",
     appId: "1:64058492601:web:5ab254dcc9f35cba77bd68"
   };
-
   try {
-    const app  = initializeApp(firebaseConfig);
-    const db   = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
     const auth = getAuth(app);
-
     window._fb = { db, auth, ref, push, onValue, query, orderByChild, set, get,
-      createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-      onAuthStateChanged, updateProfile };
+      createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile };
     window._firebaseReady = true;
-
-    // _registering flag: when true, suppress the automatic onAuthStateChanged
-    // handler so it doesn't run before updateProfile + DB write finish.
     window._registering = false;
-
-    const ready = () => new Promise(res => {
-      if (document.readyState === 'complete') res();
-      else window.addEventListener('load', res, { once: true });
+    const whenReady = () => new Promise(r => {
+      if (document.readyState === 'complete') r();
+      else window.addEventListener('load', r, { once: true });
     });
-
-    ready().then(() => {
+    whenReady().then(() => {
       onAuthStateChanged(auth, user => {
-        // Skip if we are mid-registration — doRegister will call updateAuthUI manually
-        if (window._registering) return;
+        if (window._registering) return; // skip during registration
         window._currentUser = user || null;
         if (typeof updateAuthUI    === 'function') updateAuthUI(user);
         if (user && typeof loadUserProgress === 'function') loadUserProgress(user.uid);
       });
     });
-
-  } catch(e) {
-    window._firebaseReady = false;
-    console.warn('Firebase init error:', e);
-  }
+  } catch(e) { window._firebaseReady = false; console.warn('Firebase:', e); }
 </script>
 
 <style>
@@ -401,56 +387,20 @@ footer strong{color:var(--teal-light)}
   .infographic-grid{grid-template-columns:repeat(3,1fr)}
 }
 
-/* ══════════════════════════════════════════
-   AUTH FULL PAGES
-══════════════════════════════════════════ */
-.auth-fullpage{position:fixed;inset:0;z-index:600;background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);display:flex;align-items:center;justify-content:center;padding:1rem;overflow-y:auto}
-.afp-card{background:#fff;border-radius:24px;padding:clamp(2rem,6vw,3rem);width:100%;max-width:440px;box-shadow:0 32px 80px rgba(0,0,0,.45);animation:popIn .3s ease}
-.afp-logo{font-size:2.8rem;text-align:center;margin-bottom:.5rem}
-.afp-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,5vw,2.3rem);color:var(--ink);text-align:center;margin-bottom:.2rem}
-.afp-sub{color:var(--muted);font-size:.88rem;text-align:center;margin-bottom:1.8rem}
-.afp-field{margin-bottom:1.1rem}
-.afp-field label{display:block;font-size:.82rem;font-weight:600;color:var(--ink2);margin-bottom:.4rem}
-.afp-field input{width:100%;padding:.8rem 1rem;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;box-sizing:border-box;background:#fafafa}
-.afp-field input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(13,148,136,.15);background:#fff}
-.afp-btn{width:100%;background:var(--teal);color:#fff;border:none;padding:1rem;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:background .18s,transform .1s;margin-top:.6rem;min-height:52px}
-.afp-btn:hover{background:var(--teal-dark)}
-.afp-btn:active{transform:scale(.98)}
-.afp-btn:disabled{background:#94a3b8;cursor:not-allowed}
-.afp-msg{border-radius:10px;padding:.75rem 1rem;font-size:.85rem;margin:.8rem 0;font-weight:500;text-align:center}
-.afp-msg.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
-.afp-msg.info{background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4}
-.afp-msg.success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
-.afp-switch{text-align:center;font-size:.84rem;color:var(--muted);margin-top:1rem}
-.afp-link{background:none;border:none;color:var(--teal);font-weight:700;cursor:pointer;font-size:.84rem;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:underline;padding:0}
-.afp-link:hover{color:var(--teal-dark)}
-/* SUCCESS OVERLAY */
-#success-overlay{display:none}
-#success-overlay.show{display:flex!important}
-.success-card{background:#fff;border-radius:24px;padding:2.5rem 2rem;max-width:380px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.45);animation:popIn .35s ease}
-.success-icon{font-size:4rem;margin-bottom:.75rem}
-.success-card h2{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--ink);margin-bottom:.6rem}
-.success-card p{color:var(--muted);font-size:.9rem;line-height:1.65;margin-bottom:1.5rem;white-space:pre-line}
-/* TOAST */
-.toast-container{position:fixed;bottom:calc(var(--bnav-h,60px) + .75rem);right:1rem;z-index:8000;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
-@media(min-width:641px){.toast-container{bottom:1.25rem}}
-.toast{background:#1e293b;color:#fff;padding:.75rem 1.15rem;border-radius:10px;font-size:.84rem;font-weight:500;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.3);pointer-events:all;transition:opacity .35s,transform .35s}
-.toast-success{border-left:3px solid #10b981}
-.toast-error{border-left:3px solid #ef4444}
-.toast-info{border-left:3px solid #0d9488}
-/* SCROLL TOP */
-.scroll-top{position:fixed;bottom:calc(var(--bnav-h,60px) + 4.5rem);right:1rem;z-index:400;width:40px;height:40px;border-radius:50%;background:var(--teal);color:#fff;border:none;font-size:1.1rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.2);transition:all .2s}
-.scroll-top.visible{display:flex}
-@media(min-width:641px){.scroll-top{bottom:4.5rem}}
-/* ANIMATIONS */
-@keyframes popIn{from{opacity:0;transform:scale(.88) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-/* PROFILE PAGE */
-.profile-user-card{background:linear-gradient(135deg,var(--ink) 0%,#1e3a52 100%);border-radius:18px;padding:clamp(1.4rem,4vw,2rem);display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
-.profile-avatar{width:72px;height:72px;min-width:72px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;box-shadow:0 0 0 4px rgba(20,184,166,.3)}
-.profile-user-info h3{font-family:'Cormorant Garamond',serif;font-size:clamp(1.3rem,4vw,1.7rem);color:#fff;margin-bottom:.2rem}
-.profile-email-text{color:#94a3b8;font-size:.85rem;margin-bottom:.75rem}
-.profile-signout-btn{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:.4rem .95rem;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .18s}
+/* Auth full pages */
+@keyframes authPop{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+#page-login,#page-register{display:none}
+
+/* Toast */
+.soap-toast{background:#1e293b;color:#fff;padding:.75rem 1.15rem;border-radius:10px;font-size:.84rem;font-weight:500;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.3);pointer-events:all;transition:opacity .35s,transform .35s;border-left:3px solid #0d9488}
+.soap-toast.t-success{border-color:#10b981}
+.soap-toast.t-error{border-color:#ef4444}
+.soap-toast.t-info{border-color:#0d9488}
+
+/* Profile enhancements */
+.profile-user-card{background:linear-gradient(135deg,#0f172a 0%,#1e3a52 100%);border-radius:18px;padding:clamp(1.4rem,4vw,2rem);display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.profile-avatar-lg{width:72px;height:72px;min-width:72px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;box-shadow:0 0 0 4px rgba(20,184,166,.3)}
+.profile-signout-btn{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:.4rem .95rem;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif}
 .profile-signout-btn:hover{background:rgba(239,68,68,.28)}
 .profile-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.5rem}
 .profile-stat-box{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem .75rem;text-align:center}
@@ -468,8 +418,6 @@ footer strong{color:var(--teal-light)}
 .pqb-row{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;background:var(--cream);border-radius:9px;border:1px solid var(--border)}
 .pqb-label{font-size:.87rem;color:var(--ink)}
 .pqb-score{font-weight:700;font-size:.9rem;color:var(--teal);background:var(--sky);padding:.2rem .65rem;border-radius:20px}
-/* INFOGRAPHIC DOWNLOAD */
-.fs-dl-btn{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;text-decoration:none;padding:.6rem 1.5rem;border-radius:25px;font-size:.82rem;font-weight:600;z-index:601;display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 @media(max-width:640px){.profile-stats-row{grid-template-columns:repeat(2,1fr)}.profile-user-card{flex-direction:column;text-align:center}}
 
 </style>
@@ -760,9 +708,9 @@ footer strong{color:var(--teal-light)}
     <div class="resources-grid">
       <div class="res-card"><div class="res-img">🌐<img src="" alt="" onerror="this.style.display='none'"/></div><div class="res-body"><h3>WHO Hand Hygiene Guidelines</h3><p>Official WHO guidelines including the 5 Moments framework and evidence-based recommendations.</p><a class="res-link" href="https://www.who.int/teams/integrated-health-services/infection-prevention-control/hand-hygiene" target="_blank" rel="noopener">Visit WHO ↗</a></div></div>
       <div class="res-card"><div class="res-img">🇺🇸</div><div class="res-body"><h3>CDC Hand Hygiene in Healthcare</h3><p>Comprehensive CDC guidance covering all healthcare settings with clinical recommendations.</p><a class="res-link" href="https://www.cdc.gov/handhygiene/index.html" target="_blank" rel="noopener">Visit CDC ↗</a></div></div>
-      <div class="res-card"><div class="res-img">🖨</div><div class="res-body"><h3>WHO Printable Poster</h3><p>Step-by-step handwashing poster — print and display in clinical areas or simulation labs.</p><a class="res-link" href="https://www.who.int/docs/default-source/patient-safety/how-to-handwash-poster.pdf" target="_blank" rel="noopener">Download PDF ↗</a></div></div>
-      <div class="res-card"><div class="res-img">📊</div><div class="res-body"><h3>HAI Statistics – CDC</h3><p>Data on healthcare-associated infections and the measurable impact of hand hygiene compliance.</p><a class="res-link" href="https://www.cdc.gov/healthcare-associated-infections/?CDC_AAref_Val=https://www.cdc.gov/hai/data/index.html" target="_blank" rel="noopener">View Data ↗</a></div></div>
-
+      <div class="res-card"><div class="res-img">🖨</div><div class="res-body"><h3>WHO Printable Poster</h3><p>Step-by-step handwashing poster — print and display in clinical areas or simulation labs.</p><a class="res-link" href="https://www.who.int/docs/default-source/infection-prevention-and-control/hand-hygiene/your-5-moments-for-hand-hygiene.pdf" target="_blank" rel="noopener">Download PDF ↗</a></div></div>
+      <div class="res-card"><div class="res-img">📊</div><div class="res-body"><h3>HAI Statistics – CDC</h3><p>Data on healthcare-associated infections and the measurable impact of hand hygiene compliance.</p><a class="res-link" href="https://www.cdc.gov/hai/data/index.html" target="_blank" rel="noopener">View Data ↗</a></div></div>
+      <div class="res-card"><div class="res-img">🎓</div><div class="res-body"><h3>WHO e-Learning: Save Lives</h3><p>Free WHO online course on hand hygiene in healthcare — earn a certificate on completion.</p><a class="res-link" href="https://www.who.int/teams/integrated-health-services/infection-prevention-control/hand-hygiene/e-learning" target="_blank" rel="noopener">Start Course ↗</a></div></div>
       <div class="res-card"><div class="res-img">🧪</div><div class="res-body"><h3>IPC Resources – WHO</h3><p>WHO IPC materials on standard precautions, PPE, and hand hygiene bundles for nurses.</p><a class="res-link" href="https://www.who.int/teams/integrated-health-services/infection-prevention-control" target="_blank" rel="noopener">Explore ↗</a></div></div>
     </div>
 
@@ -863,10 +811,10 @@ footer strong{color:var(--teal-light)}
     </div>
     <div id="profile-card" style="display:none">
       <div class="profile-user-card">
-        <div class="profile-avatar" id="profile-avatar-big">S</div>
-        <div class="profile-user-info">
-          <h3 id="profile-name">Student</h3>
-          <p id="profile-email" class="profile-email-text"></p>
+        <div class="profile-avatar-lg" id="profile-avatar-big">S</div>
+        <div>
+          <h3 id="profile-name" style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.3rem,4vw,1.7rem);color:#fff;margin-bottom:.2rem">Student</h3>
+          <p id="profile-email" style="color:#94a3b8;font-size:.85rem;margin-bottom:.75rem"></p>
           <button class="profile-signout-btn" onclick="doLogout()">Sign Out</button>
         </div>
       </div>
@@ -906,101 +854,99 @@ footer strong{color:var(--teal-light)}
 </div>
 
 
-<!-- ═══════════════════════════════════════════════
-     LOGIN PAGE (dedicated full page)
-═══════════════════════════════════════════════ -->
-<div id="auth-login-page" class="auth-fullpage" style="display:none">
-  <div class="afp-card">
-    <div class="afp-logo">🧼</div>
-    <h1 class="afp-title">Welcome Back</h1>
-    <p class="afp-sub">Sign in to TheSoapSolution</p>
-
-    <div class="afp-field">
-      <label>Email Address</label>
-      <input type="email" id="lp-email" placeholder="your@email.com" autocomplete="email"
-             onkeydown="if(event.key==='Enter') doLogin()"/>
+<!-- LOGIN FULL PAGE -->
+<div id="page-login" style="display:none;position:fixed;inset:0;z-index:700;background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);overflow-y:auto;align-items:center;justify-content:center;padding:1.5rem">
+  <div style="background:#fff;border-radius:24px;padding:clamp(2rem,6vw,3rem);width:100%;max-width:420px;margin:auto;box-shadow:0 32px 80px rgba(0,0,0,.5);animation:authPop .3s ease">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:2.8rem;margin-bottom:.4rem">🧼</div>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#0f172a;margin-bottom:.25rem">Welcome Back</h2>
+      <p style="color:#64748b;font-size:.88rem">Sign in to TheSoapSolution</p>
     </div>
-    <div class="afp-field">
-      <label>Password</label>
-      <input type="password" id="lp-pass" placeholder="Your password" autocomplete="current-password"
-             onkeydown="if(event.key==='Enter') doLogin()"/>
+    <div id="lp-banner" style="display:none;border-radius:10px;padding:.75rem 1rem;font-size:.85rem;font-weight:500;text-align:center;margin-bottom:1rem"></div>
+    <div style="margin-bottom:1rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Email Address</label>
+      <input id="lp-email" type="email" placeholder="your@email.com" autocomplete="email"
+        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none;background:#fafafa"
+        onkeydown="if(event.key==='Enter')doLogin()" onfocus="this.style.borderColor='#0d9488'" onblur="this.style.borderColor='#e2e8f0'"/>
     </div>
-
-    <div id="lp-msg" class="afp-msg" style="display:none"></div>
-
-    <button class="afp-btn" id="lp-btn" onclick="doLogin()">Sign In</button>
-
-    <p class="afp-switch">Don't have an account?
-      <button class="afp-link" onclick="showAuthPage('register')">Create one here</button>
+    <div style="margin-bottom:1.4rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Password</label>
+      <input id="lp-pass" type="password" placeholder="Your password" autocomplete="current-password"
+        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none;background:#fafafa"
+        onkeydown="if(event.key==='Enter')doLogin()" onfocus="this.style.borderColor='#0d9488'" onblur="this.style.borderColor='#e2e8f0'"/>
+    </div>
+    <button id="lp-btn" onclick="doLogin()"
+      style="width:100%;background:#0d9488;color:#fff;border:none;padding:1rem;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;min-height:52px;transition:background .18s">
+      Sign In
+    </button>
+    <p style="text-align:center;font-size:.84rem;color:#64748b;margin-top:1.2rem">
+      Don't have an account?
+      <button onclick="showAuthPage('register')" style="background:none;border:none;color:#0d9488;font-weight:700;cursor:pointer;font-size:.84rem;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:underline">Create one here</button>
     </p>
-    <p class="afp-switch" style="margin-top:.3rem">
-      <button class="afp-link" onclick="SP('home')">← Back to Home</button>
-    </p>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════
-     REGISTER PAGE (dedicated full page)
-═══════════════════════════════════════════════ -->
-<div id="auth-register-page" class="auth-fullpage" style="display:none">
-  <div class="afp-card">
-    <div class="afp-logo">🧼</div>
-    <h1 class="afp-title">Create Account</h1>
-    <p class="afp-sub">Join TheSoapSolution — it's free</p>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
-      <div class="afp-field">
-        <label>First Name</label>
-        <input type="text" id="rp-firstname" placeholder="Maria" autocomplete="given-name"/>
-      </div>
-      <div class="afp-field">
-        <label>Last Name</label>
-        <input type="text" id="rp-lastname" placeholder="Santos" autocomplete="family-name"/>
-      </div>
-    </div>
-    <div class="afp-field">
-      <label>Email Address</label>
-      <input type="email" id="rp-email" placeholder="your@email.com" autocomplete="email"/>
-    </div>
-    <div class="afp-field">
-      <label>Password <span style="color:var(--muted);font-weight:400;font-size:.78rem">(min 6 characters)</span></label>
-      <input type="password" id="rp-pass" placeholder="Create a password" autocomplete="new-password"
-             onkeydown="if(event.key==='Enter') doRegister()"/>
-    </div>
-
-    <div id="rp-msg" class="afp-msg" style="display:none"></div>
-
-    <button class="afp-btn" id="rp-btn" onclick="doRegister()">Create Account</button>
-
-    <p class="afp-switch">Already have an account?
-      <button class="afp-link" onclick="showAuthPage('login')">Sign in here</button>
-    </p>
-    <p class="afp-switch" style="margin-top:.3rem">
-      <button class="afp-link" onclick="SP('home')">← Back to Home</button>
+    <p style="text-align:center;margin-top:.3rem">
+      <button onclick="SP('home')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:.82rem;font-family:'Plus Jakarta Sans',sans-serif">← Back to Home</button>
     </p>
   </div>
 </div>
 
-<!-- SUCCESS OVERLAY (shown after registration) -->
-<div id="success-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:1rem">
-  <div class="success-card">
-    <div class="success-icon">✅</div>
-    <h2 id="success-title">Account Created!</h2>
-    <p id="success-body">Welcome to TheSoapSolution!</p>
-    <button class="afp-btn" id="success-btn" onclick="closeSuccessAndGo()">Go to Home</button>
+<!-- REGISTER FULL PAGE -->
+<div id="page-register" style="display:none;position:fixed;inset:0;z-index:700;background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);overflow-y:auto;align-items:center;justify-content:center;padding:1.5rem">
+  <div style="background:#fff;border-radius:24px;padding:clamp(2rem,6vw,3rem);width:100%;max-width:420px;margin:auto;box-shadow:0 32px 80px rgba(0,0,0,.5);animation:authPop .3s ease">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:2.8rem;margin-bottom:.4rem">🧼</div>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:#0f172a;margin-bottom:.25rem">Create Account</h2>
+      <p style="color:#64748b;font-size:.88rem">Join TheSoapSolution — it's free</p>
+    </div>
+    <div id="rp-banner" style="display:none;border-radius:10px;padding:.75rem 1rem;font-size:.85rem;font-weight:500;text-align:center;margin-bottom:1rem"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem">
+      <div>
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">First Name</label>
+        <input id="rp-fn" type="text" placeholder="Maria" autocomplete="given-name"
+          style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none;background:#fafafa"
+          onfocus="this.style.borderColor='#0d9488'" onblur="this.style.borderColor='#e2e8f0'"/>
+      </div>
+      <div>
+        <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Last Name</label>
+        <input id="rp-ln" type="text" placeholder="Santos" autocomplete="family-name"
+          style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none;background:#fafafa"
+          onfocus="this.style.borderColor='#0d9488'" onblur="this.style.borderColor='#e2e8f0'"/>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Email Address</label>
+      <input id="rp-email" type="email" placeholder="your@email.com" autocomplete="email"
+        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none;background:#fafafa"
+        onfocus="this.style.borderColor='#0d9488'" onblur="this.style.borderColor='#e2e8f0'"/>
+    </div>
+    <div style="margin-bottom:1.4rem">
+      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Password <span style="font-weight:400;color:#64748b">(min 6 chars)</span></label>
+      <input id="rp-pass" type="password" placeholder="Create a password" autocomplete="new-password"
+        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none;background:#fafafa"
+        onkeydown="if(event.key==='Enter')doRegister()" onfocus="this.style.borderColor='#0d9488'" onblur="this.style.borderColor='#e2e8f0'"/>
+    </div>
+    <button id="rp-btn" onclick="doRegister()"
+      style="width:100%;background:#0d9488;color:#fff;border:none;padding:1rem;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;min-height:52px;transition:background .18s">
+      Create Account
+    </button>
+    <p style="text-align:center;font-size:.84rem;color:#64748b;margin-top:1.2rem">
+      Already have an account?
+      <button onclick="showAuthPage('login')" style="background:none;border:none;color:#0d9488;font-weight:700;cursor:pointer;font-size:.84rem;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:underline">Sign in here</button>
+    </p>
+    <p style="text-align:center;margin-top:.3rem">
+      <button onclick="SP('home')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:.82rem;font-family:'Plus Jakarta Sans',sans-serif">← Back to Home</button>
+    </p>
   </div>
 </div>
 
 <!-- FULLSCREEN OVERLAY -->
-<div class="fs-overlay" id="fs-overlay">
-  <button class="fs-close" onclick="closeFS()" title="Close (Esc)">✕</button>
-  <a id="fs-dl" class="fs-dl-btn" href="#" download style="display:none">⬇ Download</a>
-  <img id="fs-img" src="" alt="" style="display:none" onclick="event.stopPropagation()"/>
+<div class="fs-overlay" id="fs-overlay" onclick="closeFS()">
+  <button class="fs-close" onclick="closeFS()">✕</button>
+  <img id="fs-img" src="" alt="" style="display:none"/>
   <div id="fs-emoji" class="fs-emoji" style="display:none"></div>
 </div>
 
-<div class="toast-container" id="toast-container"></div>
-<button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+<!-- TOAST CONTAINER -->
+<div id="toast-container" style="position:fixed;bottom:calc(var(--bnav-h,60px) + .75rem);right:1rem;z-index:8000;display:flex;flex-direction:column;gap:.5rem;pointer-events:none"></div>
 
 <footer>
   <p>TheSoapSolution Educational Portal · NCM 110L – Nursing Informatics Laboratory</p>
@@ -1010,497 +956,553 @@ footer strong{color:var(--teal-light)}
 
 
 <script>
-// ══════════════════════════════════════════════════════════
 // STATE
-// ══════════════════════════════════════════════════════════
-var modulesVisited    = {};
-var quizSetsCompleted = {};
-var setScores         = {};
-var answers           = {};
-var _progressListener = null;
+var modulesVisited={},quizSetsCompleted={},setScores={},answers={};
+var _progressListener=null;
 
-// ══════════════════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════════════════
-function SP(id) {
-  // Hide auth full pages
-  var lp = document.getElementById('auth-login-page');
-  var rp = document.getElementById('auth-register-page');
-  if (lp) lp.style.display = 'none';
-  if (rp) rp.style.display = 'none';
-
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  var t = document.getElementById(id);
-  if (t) t.classList.add('active');
-  document.querySelectorAll('.nav-links a[data-page], .bottom-nav a[data-page]').forEach(function(a){
-    a.classList.toggle('active', a.getAttribute('data-page') === id);
-  });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (id === 'quiz')  setTimeout(loadLeaderboard, 600);
-  if (id === 'forum') setTimeout(loadForumPosts, 300);
-  if (id === 'modules' && !modulesVisited['soap']) {
-    modulesVisited['soap'] = true;
-    saveProgress(); renderProgress();
-  }
+// SHOW/HIDE AUTH PAGES
+function showAuthPage(which){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  var lp=document.getElementById('page-login'),rp=document.getElementById('page-register');
+  if(lp)lp.style.display='none'; if(rp)rp.style.display='none';
+  clearBanner('lp-banner'); clearBanner('rp-banner');
+  var show=(which==='register')?rp:lp;
+  if(show){show.style.display='flex';window.scrollTo(0,0);}
 }
-function goTo(id) { SP(id); }
+function openAuth(tab){showAuthPage(tab||'login');}
+function closeAuth(){SP('home');}
+function switchAuth(tab){showAuthPage(tab);}
 
-// Show a dedicated auth full page
-function showAuthPage(which) {
-  // Hide all normal pages
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  var lp = document.getElementById('auth-login-page');
-  var rp = document.getElementById('auth-register-page');
-  if (lp) lp.style.display = 'none';
-  if (rp) rp.style.display = 'none';
-  clearAuthMessages();
-  var target = which === 'register'
-    ? document.getElementById('auth-register-page')
-    : document.getElementById('auth-login-page');
-  if (target) { target.style.display = 'flex'; window.scrollTo(0,0); }
+// BANNER HELPERS
+function showBanner(id,msg,type){
+  var el=document.getElementById(id);if(!el)return;
+  el.textContent=msg; el.style.display='block';
+  el.style.background=type==='error'?'#fef2f2':type==='success'?'#f0fdf4':'#f0fdfa';
+  el.style.color=type==='error'?'#b91c1c':type==='success'?'#166534':'#0f766e';
+  el.style.border='1px solid '+(type==='error'?'#fecaca':type==='success'?'#bbf7d0':'#99f6e4');
+}
+function clearBanner(id){var el=document.getElementById(id);if(!el)return;el.textContent='';el.style.display='none';}
+function setBtnLoading(id,loading,label){
+  var el=document.getElementById(id);if(!el)return;
+  el.disabled=loading;el.textContent=label;
+  el.style.background=loading?'#94a3b8':'#0d9488';
+  el.style.cursor=loading?'not-allowed':'pointer';
 }
 
-// kept for any old references in HTML
-function openAuth(tab) { showAuthPage(tab || 'login'); }
-function closeAuth()    { SP('home'); }
-
-function clearAuthMessages() {
-  ['lp-msg','rp-msg'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) { el.textContent=''; el.className='afp-msg'; el.style.display='none'; }
-  });
-}
-
-function showMsg(id, text, type) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  el.textContent    = text;
-  el.className      = 'afp-msg ' + (type || 'error');
-  el.style.display  = 'block';
-}
-
-function setBtnState(id, loading, label) {
-  var btn = document.getElementById(id);
-  if (!btn) return;
-  btn.disabled    = loading;
-  btn.textContent = label;
-}
-
-// ══════════════════════════════════════════════════════════
-// SUCCESS OVERLAY
-// ══════════════════════════════════════════════════════════
-var _successCallback = null;
-function showSuccess(title, body, btnLabel, onDone) {
-  var ov = document.getElementById('success-overlay');
-  var t  = document.getElementById('success-title');
-  var b  = document.getElementById('success-body');
-  var btn= document.getElementById('success-btn');
-  if (!ov) return;
-  if (t)   t.textContent  = title;
-  if (b)   b.textContent  = body;
-  if (btn) btn.textContent= btnLabel || 'Continue';
-  _successCallback = onDone || null;
-  ov.classList.add('show');
-}
-function closeSuccessAndGo() {
-  var ov = document.getElementById('success-overlay');
-  if (ov) ov.classList.remove('show');
-  if (typeof _successCallback === 'function') _successCallback();
-  _successCallback = null;
-}
-
-// ══════════════════════════════════════════════════════════
 // TOAST
-// ══════════════════════════════════════════════════════════
-function showToast(msg, type, dur) {
-  var c = document.getElementById('toast-container');
-  if (!c) return;
-  var d = document.createElement('div');
-  d.className  = 'toast toast-' + (type || 'info');
-  d.textContent= msg;
-  c.appendChild(d);
-  setTimeout(function(){
-    d.style.opacity   = '0';
-    d.style.transform = 'translateY(10px)';
-    setTimeout(function(){ if (d.parentNode) d.parentNode.removeChild(d); }, 350);
-  }, dur || 3200);
+function showToast(msg,type,dur){
+  var c=document.getElementById('toast-container');if(!c)return;
+  var d=document.createElement('div');
+  d.className='soap-toast t-'+(type||'info');
+  d.textContent=msg;c.appendChild(d);
+  setTimeout(function(){d.style.opacity='0';d.style.transform='translateY(8px)';
+    setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},350);},dur||3200);
 }
 
-// ══════════════════════════════════════════════════════════
+// NAVIGATION
+function SP(id){
+  var lp=document.getElementById('page-login'),rp=document.getElementById('page-register');
+  if(lp)lp.style.display='none';if(rp)rp.style.display='none';
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  var t=document.getElementById(id);if(t)t.classList.add('active');
+  document.querySelectorAll('.nav-links a[data-page],.bottom-nav a[data-page]').forEach(function(a){
+    a.classList.toggle('active',a.getAttribute('data-page')===id);
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='quiz')setTimeout(loadLeaderboard,600);
+  if(id==='forum')setTimeout(loadForumPosts,300);
+  if(id==='modules'&&!modulesVisited['soap']){modulesVisited['soap']=true;saveProgress();renderProgress();}
+}
+function goTo(id){SP(id);}
+
 // LOGIN
-// ══════════════════════════════════════════════════════════
-function doLogin() {
-  if (!window._firebaseReady) { showMsg('lp-msg','Firebase not connected — refresh the page.'); return; }
-  var email = (document.getElementById('lp-email')||{value:''}).value.trim();
-  var pass  = (document.getElementById('lp-pass') ||{value:''}).value;
-  if (!email || !pass) { showMsg('lp-msg','Please fill in both email and password.'); return; }
-
-  setBtnState('lp-btn', true, 'Signing in…');
-  showMsg('lp-msg','Signing in…','info');
-
-  window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass)
-    .then(function(cred) {
-      var user = cred.user;
-      setBtnState('lp-btn', false, 'Sign In');
-      showMsg('lp-msg','','');
-      // Fetch real display name from DB first, THEN update UI
-      return getUserDisplayName(user.uid).then(function(name) {
-        window._currentUser      = user;
-        window._currentUserName  = name;
-        window._currentUserEmail = email;
+function doLogin(){
+  if(!window._firebaseReady){showBanner('lp-banner','Firebase not connected.','error');return;}
+  var email=(document.getElementById('lp-email')||{value:''}).value.trim();
+  var pass=(document.getElementById('lp-pass')||{value:''}).value;
+  if(!email||!pass){showBanner('lp-banner','Please enter your email and password.','error');return;}
+  setBtnLoading('lp-btn',true,'Signing in...');
+  showBanner('lp-banner','Signing in...','info');
+  window._fb.signInWithEmailAndPassword(window._fb.auth,email,pass)
+    .then(function(cred){
+      var user=cred.user;
+      return getUserDisplayName(user.uid).then(function(name){
+        window._currentUser=user;
+        window._currentUserName=name;
+        window._currentUserEmail=email;
         updateAuthUI(user);
         loadUserProgress(user.uid);
+        setBtnLoading('lp-btn',false,'Sign In');
         SP('home');
-        showToast('Welcome back, ' + name + '! 👋', 'success');
+        showToast('Welcome back, '+name+'!','success');
       });
     })
-    .catch(function(e) {
-      setBtnState('lp-btn', false, 'Sign In');
-      var msg = 'Incorrect email or password. Please try again.';
-      if (e.code === 'auth/too-many-requests') msg = 'Too many attempts — please wait a moment.';
-      if (e.code === 'auth/user-disabled')     msg = 'This account has been disabled.';
-      showMsg('lp-msg', msg, 'error');
+    .catch(function(e){
+      setBtnLoading('lp-btn',false,'Sign In');
+      var msg='Incorrect email or password.';
+      if(e.code==='auth/too-many-requests')msg='Too many attempts. Wait a moment.';
+      if(e.code==='auth/user-disabled')msg='This account has been disabled.';
+      showBanner('lp-banner',msg,'error');
     });
 }
 
-// ══════════════════════════════════════════════════════════
-// REGISTER  — the entire fix lives here
-// ══════════════════════════════════════════════════════════
-function doRegister() {
-  if (!window._firebaseReady) { showMsg('rp-msg','Firebase not connected — refresh the page.'); return; }
-
-  var fn    = (document.getElementById('rp-firstname')||{value:''}).value.trim();
-  var ln    = (document.getElementById('rp-lastname') ||{value:''}).value.trim();
-  var email = (document.getElementById('rp-email')    ||{value:''}).value.trim();
-  var pass  = (document.getElementById('rp-pass')     ||{value:''}).value;
-
-  if (!fn)          { showMsg('rp-msg','Please enter your first name.',   'error'); return; }
-  if (!ln)          { showMsg('rp-msg','Please enter your last name.',    'error'); return; }
-  if (!email)       { showMsg('rp-msg','Please enter your email address.','error'); return; }
-  if (pass.length < 6){ showMsg('rp-msg','Password must be at least 6 characters.','error'); return; }
-
-  var fullName = fn + ' ' + ln;
-
-  // ★ KEY FIX: set _registering = true BEFORE createUserWithEmailAndPassword
-  //   This tells onAuthStateChanged to skip its callback while we finish setup.
-  window._registering = true;
-
-  setBtnState('rp-btn', true, 'Creating…');
-  showMsg('rp-msg','Setting up your account…','info');
-
-  window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass)
-    .then(function(cred) {
-      var user = cred.user;
-      // Do BOTH writes before we let anything else happen
+// REGISTER
+function doRegister(){
+  if(!window._firebaseReady){showBanner('rp-banner','Firebase not connected.','error');return;}
+  var fn=(document.getElementById('rp-fn')||{value:''}).value.trim();
+  var ln=(document.getElementById('rp-ln')||{value:''}).value.trim();
+  var email=(document.getElementById('rp-email')||{value:''}).value.trim();
+  var pass=(document.getElementById('rp-pass')||{value:''}).value;
+  if(!fn){showBanner('rp-banner','Please enter your first name.','error');return;}
+  if(!ln){showBanner('rp-banner','Please enter your last name.','error');return;}
+  if(!email){showBanner('rp-banner','Please enter your email.','error');return;}
+  if(pass.length<6){showBanner('rp-banner','Password needs 6+ characters.','error');return;}
+  var fullName=fn+' '+ln;
+  window._registering=true;
+  setBtnLoading('rp-btn',true,'Creating account...');
+  showBanner('rp-banner','Setting up your account...','info');
+  window._fb.createUserWithEmailAndPassword(window._fb.auth,email,pass)
+    .then(function(cred){
+      var user=cred.user;
       return Promise.all([
-        window._fb.updateProfile(user, { displayName: fullName }),
-        window._fb.set(window._fb.ref(window._fb.db, 'users/' + user.uid + '/name'), fullName)
-      ]).then(function() { return user; });
+        window._fb.updateProfile(user,{displayName:fullName}),
+        window._fb.set(window._fb.ref(window._fb.db,'users/'+user.uid+'/name'),fullName)
+      ]).then(function(){return user;});
     })
-    .then(function(user) {
-      // ★ Now it's safe to proceed — name is saved everywhere
-      window._registering      = false;
-      window._currentUser      = user;
-      window._currentUserName  = fullName;
-      window._currentUserEmail = email;
-
-      // Reset progress for new account
-      modulesVisited = {}; quizSetsCompleted = {}; setScores = {}; answers = {};
-      window._gameCompleted = false; window._forumPosted = false;
-
-      // Update the whole UI with the correct name
-      updateAuthUI(user);
-
-      // Reset form fields
-      ['rp-firstname','rp-lastname','rp-email','rp-pass'].forEach(function(id){
-        var el = document.getElementById(id); if (el) el.value = '';
+    .then(function(user){
+      window._registering=false;
+      window._currentUser=user;
+      window._currentUserName=fullName;
+      window._currentUserEmail=email;
+      modulesVisited={};quizSetsCompleted={};setScores={};answers={};
+      window._gameCompleted=false;window._forumPosted=false;
+      ['rp-fn','rp-ln','rp-email','rp-pass'].forEach(function(id){
+        var el=document.getElementById(id);if(el)el.value='';
       });
-      setBtnState('rp-btn', false, 'Create Account');
-
-      // Show success overlay — redirect to home on dismiss
-      showSuccess(
-        'Account Created! 🎉',
-        'Welcome to TheSoapSolution, ' + fn + '!\n\nYour account is ready. Sign in anytime with your email and password.',
-        'Go to Home',
-        function() { SP('home'); }
-      );
+      setBtnLoading('rp-btn',false,'Create Account');
+      // Sign out so they log in fresh, then redirect to login with success message
+      window._fb.signOut(window._fb.auth).then(function(){
+        window._currentUser=null;
+        updateAuthUI(null);
+        showAuthPage('login');
+        showBanner('lp-banner','Account created! Sign in with your new credentials.','success');
+      });
     })
-    .catch(function(e) {
-      window._registering = false;
-      setBtnState('rp-btn', false, 'Create Account');
-      var msg = 'Registration failed. Please try again.';
-      if (e.code === 'auth/email-already-in-use') msg = 'This email is already registered. Sign in instead.';
-      else if (e.code === 'auth/invalid-email')   msg = 'Please enter a valid email address.';
-      else if (e.code === 'auth/weak-password')   msg = 'Password must be at least 6 characters.';
-      showMsg('rp-msg', msg, 'error');
+    .catch(function(e){
+      window._registering=false;
+      setBtnLoading('rp-btn',false,'Create Account');
+      var msg='Registration failed. Try again.';
+      if(e.code==='auth/email-already-in-use')msg='Email already registered. Sign in instead.';
+      else if(e.code==='auth/invalid-email')msg='Please enter a valid email address.';
+      else if(e.code==='auth/weak-password')msg='Password must be at least 6 characters.';
+      showBanner('rp-banner',msg,'error');
     });
 }
 
-// ══════════════════════════════════════════════════════════
 // LOGOUT
-// ══════════════════════════════════════════════════════════
-function doLogout() {
-  if (!window._firebaseReady) return;
-  // Detach progress listener for this user
-  if (_progressListener) { _progressListener(); _progressListener = null; }
-  // Wipe all local state
-  modulesVisited = {}; quizSetsCompleted = {}; setScores = {}; answers = {};
-  window._gameCompleted = false; window._forumPosted = false;
-  window._currentUser = null; window._currentUserName = null; window._currentUserEmail = null;
+function doLogout(){
+  if(!window._firebaseReady)return;
+  if(_progressListener){_progressListener();_progressListener=null;}
+  modulesVisited={};quizSetsCompleted={};setScores={};answers={};
+  window._gameCompleted=false;window._forumPosted=false;
+  window._currentUser=null;window._currentUserName=null;window._currentUserEmail=null;
   window._fb.signOut(window._fb.auth);
+  updateAuthUI(null);
   renderProgress();
-  showToast('Signed out successfully.', 'info');
-  SP('home');
+  showAuthPage('login');
+  showBanner('lp-banner','You have been signed out.','info');
 }
 
-// ══════════════════════════════════════════════════════════
-// GET NAME FROM DATABASE
-// ══════════════════════════════════════════════════════════
-function getUserDisplayName(uid) {
-  if (!window._firebaseReady) return Promise.resolve('Student');
-  return window._fb.get(window._fb.ref(window._fb.db, 'users/' + uid + '/name'))
-    .then(function(s) { return s.exists() ? s.val() : 'Student'; })
-    .catch(function()  { return 'Student'; });
+// GET NAME FROM DB
+function getUserDisplayName(uid){
+  if(!window._firebaseReady)return Promise.resolve('Student');
+  return window._fb.get(window._fb.ref(window._fb.db,'users/'+uid+'/name'))
+    .then(function(s){return s.exists()?s.val():'Student';})
+    .catch(function(){return 'Student';});
 }
 
-// ══════════════════════════════════════════════════════════
-// UPDATE ALL UI FOR LOGGED-IN / LOGGED-OUT STATE
-// ══════════════════════════════════════════════════════════
-function updateAuthUI(user) {
-  try {
-    var btn  = document.getElementById('nav-auth-btn');
-    var chip = document.getElementById('user-chip');
-
-    if (user) {
-      var name  = window._currentUserName  || user.displayName || (user.email||'').split('@')[0] || 'Student';
-      var email = window._currentUserEmail || user.email || '';
-      window._currentUserName  = name;
-      window._currentUserEmail = email;
-
-      if (btn)  btn.style.display = 'none';
-      if (chip) chip.classList.add('show');
-      var av = document.getElementById('user-av');
-      var nm = document.getElementById('user-nm');
-      if (av) av.textContent = name[0].toUpperCase();
-      if (nm) nm.textContent = name;
-
-      // Forum bar
-      var gp = document.getElementById('forum-guest-prompt');
-      var ub = document.getElementById('forum-user-bar');
-      var cb = document.getElementById('comment-box-area');
-      var gw = document.getElementById('guest-comment-wall');
-      if (gp) gp.style.display  = 'none';
-      if (ub) ub.classList.add('show');
-      var fn = document.getElementById('forum-user-name');
-      if (fn) fn.textContent = name;
-      if (cb) cb.style.display  = '';
-      if (gw) gw.style.display  = 'none';
-
-      // Profile card
-      var pg  = document.getElementById('profile-guest');
-      var pc  = document.getElementById('profile-card');
-      var pn  = document.getElementById('profile-name');
-      var pe  = document.getElementById('profile-email');
-      var pab = document.getElementById('profile-avatar-big');
-      if (pg)  pg.style.display  = 'none';
-      if (pc)  pc.style.display  = '';
-      if (pn)  pn.textContent    = name;
-      if (pe)  pe.textContent    = email;
-      if (pab) pab.textContent   = name[0].toUpperCase();
-
+// UPDATE ALL UI
+function updateAuthUI(user){
+  try{
+    var btn=document.getElementById('nav-auth-btn');
+    var chip=document.getElementById('user-chip');
+    if(user){
+      var name=window._currentUserName||user.displayName||(user.email||'').split('@')[0]||'Student';
+      var email=window._currentUserEmail||user.email||'';
+      window._currentUserName=name;window._currentUserEmail=email;
+      if(btn)btn.style.display='none';
+      if(chip)chip.classList.add('show');
+      var av=document.getElementById('user-av'),nm=document.getElementById('user-nm');
+      if(av)av.textContent=name[0].toUpperCase();
+      if(nm)nm.textContent=name;
+      var gp=document.getElementById('forum-guest-prompt'),ub=document.getElementById('forum-user-bar');
+      var cb=document.getElementById('comment-box-area'),gw=document.getElementById('guest-comment-wall');
+      if(gp)gp.style.display='none';if(ub)ub.classList.add('show');
+      var fn=document.getElementById('forum-user-name');if(fn)fn.textContent=name;
+      if(cb)cb.style.display='';if(gw)gw.style.display='none';
+      var pg=document.getElementById('profile-guest'),pc=document.getElementById('profile-card');
+      var pn=document.getElementById('profile-name'),pe=document.getElementById('profile-email');
+      var pab=document.getElementById('profile-avatar-big');
+      if(pg)pg.style.display='none';if(pc)pc.style.display='';
+      if(pn)pn.textContent=name;if(pe)pe.textContent=email;
+      if(pab)pab.textContent=name[0].toUpperCase();
       renderProgress();
-
-    } else {
-      // Signed out
-      if (btn)  { btn.style.display = ''; btn.textContent = 'Sign In'; }
-      if (chip) chip.classList.remove('show');
-      ['forum-guest-prompt','guest-comment-wall'].forEach(function(id){
-        var el = document.getElementById(id); if (el) el.style.display = '';
-      });
-      var ub2 = document.getElementById('forum-user-bar');
-      var cb2 = document.getElementById('comment-box-area');
-      if (ub2) ub2.classList.remove('show');
-      if (cb2) cb2.style.display = 'none';
-      var pg2 = document.getElementById('profile-guest');
-      var pc2 = document.getElementById('profile-card');
-      if (pg2) pg2.style.display = '';
-      if (pc2) pc2.style.display = 'none';
+    }else{
+      window._currentUserName=null;window._currentUserEmail=null;
+      if(btn){btn.style.display='';btn.textContent='Sign In';}
+      if(chip)chip.classList.remove('show');
+      var gp2=document.getElementById('forum-guest-prompt'),ub2=document.getElementById('forum-user-bar');
+      var cb2=document.getElementById('comment-box-area'),gw2=document.getElementById('guest-comment-wall');
+      var pg2=document.getElementById('profile-guest'),pc2=document.getElementById('profile-card');
+      if(gp2)gp2.style.display='';if(ub2)ub2.classList.remove('show');
+      if(cb2)cb2.style.display='none';if(gw2)gw2.style.display='';
+      if(pg2)pg2.style.display='';if(pc2)pc2.style.display='none';
       renderProgress();
     }
-  } catch(e) { console.warn('updateAuthUI:', e); }
+  }catch(e){console.warn('updateAuthUI:',e);}
 }
 
-// ══════════════════════════════════════════════════════════
-// PROGRESS (per-UID, detach old listener on account switch)
-// ══════════════════════════════════════════════════════════
-function loadUserProgress(uid) {
-  if (!window._firebaseReady) return;
-  if (_progressListener) { _progressListener(); _progressListener = null; }
-  var progressRef = window._fb.ref(window._fb.db, 'users/' + uid + '/progress');
-  _progressListener = window._fb.onValue(progressRef, function(snap) {
-    var data = snap.val() || {};
-    modulesVisited = {}; quizSetsCompleted = {}; setScores = {};
-    window._gameCompleted = false; window._forumPosted = false;
-    (data.modules  || []).forEach(function(m){ modulesVisited[m]    = true; });
-    (data.quizSets || []).forEach(function(s){ quizSetsCompleted[s] = true; });
-    if (data.s1 >= 0) setScores.s1 = data.s1;
-    if (data.s2 >= 0) setScores.s2 = data.s2;
-    if (data.s3 >= 0) setScores.s3 = data.s3;
-    window._gameCompleted = (data.gameCompleted === 1);
-    window._forumPosted   = (data.forumPosted   === 1);
+// PROGRESS
+function loadUserProgress(uid){
+  if(!window._firebaseReady)return;
+  if(_progressListener){_progressListener();_progressListener=null;}
+  var pr=window._fb.ref(window._fb.db,'users/'+uid+'/progress');
+  _progressListener=window._fb.onValue(pr,function(snap){
+    var d=snap.val()||{};
+    modulesVisited={};quizSetsCompleted={};setScores={};
+    window._gameCompleted=false;window._forumPosted=false;
+    (d.modules||[]).forEach(function(m){modulesVisited[m]=true;});
+    (d.quizSets||[]).forEach(function(s){quizSetsCompleted[s]=true;});
+    if(d.s1>=0)setScores.s1=d.s1;if(d.s2>=0)setScores.s2=d.s2;if(d.s3>=0)setScores.s3=d.s3;
+    window._gameCompleted=(d.gameCompleted===1);window._forumPosted=(d.forumPosted===1);
     renderProgress();
   });
 }
-
-function saveProgress() {
-  if (!window._firebaseReady || !window._currentUser) return;
-  window._fb.set(window._fb.ref(window._fb.db, 'users/' + window._currentUser.uid + '/progress'), {
-    modules:       Object.keys(modulesVisited),
-    quizSets:      Object.keys(quizSetsCompleted),
-    s1: setScores.s1 !== undefined ? setScores.s1 : -1,
-    s2: setScores.s2 !== undefined ? setScores.s2 : -1,
-    s3: setScores.s3 !== undefined ? setScores.s3 : -1,
-    gameCompleted: window._gameCompleted ? 1 : 0,
-    forumPosted:   window._forumPosted   ? 1 : 0
+function saveProgress(){
+  if(!window._firebaseReady||!window._currentUser)return;
+  window._fb.set(window._fb.ref(window._fb.db,'users/'+window._currentUser.uid+'/progress'),{
+    modules:Object.keys(modulesVisited),quizSets:Object.keys(quizSetsCompleted),
+    s1:setScores.s1!==undefined?setScores.s1:-1,
+    s2:setScores.s2!==undefined?setScores.s2:-1,
+    s3:setScores.s3!==undefined?setScores.s3:-1,
+    gameCompleted:window._gameCompleted?1:0,forumPosted:window._forumPosted?1:0
   });
 }
-
-function renderProgress() {
-  var mC = Object.keys(modulesVisited).length;
-  var qS = Object.keys(quizSetsCompleted).length;
-  var qC = qS * 5;
-  var gD = !!window._gameCompleted;
-  var cD = !!window._forumPosted;
-  var earned = (mC>=1?1:0)+(mC>=3?1:0)+(gD?1:0)+(qS>=3?1:0)+(cD?1:0);
-  var pct    = Math.min(100, Math.round((mC/3*40)+(qC/15*60)));
-  function sv(id,v,w){ var e=document.getElementById(id); if(e){ if(w) e.style.width=v; else e.textContent=v; } }
-  sv('prog-modules-label',mC+'/3');  sv('prog-modules',Math.round(mC/3*100)+'%',true);
-  sv('prog-quiz-label',qC+'/15');    sv('prog-quiz',Math.round(qC/15*100)+'%',true);
-  sv('profile-modules-label',mC+'/3'); sv('profile-modules',Math.round(mC/3*100)+'%',true);
-  sv('profile-quiz-label',qC+'/15');   sv('profile-quiz',Math.round(qC/15*100)+'%',true);
-  sv('pstat-modules',mC+'/3'); sv('pstat-quiz',qC+'/15'); sv('pstat-badges',earned+'/5'); sv('pstat-pct',pct+'%');
-  sv('pqb-s1',setScores.s1!==undefined?setScores.s1+'/5':'—');
-  sv('pqb-s2',setScores.s2!==undefined?setScores.s2+'/5':'—');
-  sv('pqb-s3',setScores.s3!==undefined?setScores.s3+'/5':'—');
-  function bd(id,on){ var e=document.getElementById(id); if(e) e.classList.toggle('earned',!!on); }
-  bd('badge-explorer',mC>=1); bd('badge-hygiene',mC>=3); bd('badge-game',gD); bd('badge-quiz',qS>=3); bd('badge-contrib',cD);
-  bd('pb-explorer',mC>=1);    bd('pb-hygiene',mC>=3);    bd('pb-game',gD);    bd('pb-quiz',qS>=3);    bd('pb-contrib',cD);
+function renderProgress(){
+  var mC=Object.keys(modulesVisited).length,qS=Object.keys(quizSetsCompleted).length,qC=qS*5;
+  var gD=!!window._gameCompleted,cD=!!window._forumPosted;
+  var earned=(mC>=1?1:0)+(mC>=3?1:0)+(gD?1:0)+(qS>=3?1:0)+(cD?1:0);
+  var pct=Math.min(100,Math.round((mC/3*40)+(qC/15*60)));
+  function sv(id,v,w){var e=document.getElementById(id);if(e){if(w)e.style.width=v;else e.textContent=v;}}
+  sv('prog-modules-label',mC+'/3');sv('prog-modules',Math.round(mC/3*100)+'%',true);
+  sv('prog-quiz-label',qC+'/15');sv('prog-quiz',Math.round(qC/15*100)+'%',true);
+  sv('profile-modules-label',mC+'/3');sv('profile-modules',Math.round(mC/3*100)+'%',true);
+  sv('profile-quiz-label',qC+'/15');sv('profile-quiz',Math.round(qC/15*100)+'%',true);
+  sv('pstat-modules',mC+'/3');sv('pstat-quiz',qC+'/15');sv('pstat-badges',earned+'/5');sv('pstat-pct',pct+'%');
+  sv('pqb-s1',setScores.s1!==undefined?setScores.s1+'/5':'--');
+  sv('pqb-s2',setScores.s2!==undefined?setScores.s2+'/5':'--');
+  sv('pqb-s3',setScores.s3!==undefined?setScores.s3+'/5':'--');
+  function bd(id,on){var e=document.getElementById(id);if(e)e.classList.toggle('earned',!!on);}
+  bd('badge-explorer',mC>=1);bd('badge-hygiene',mC>=3);bd('badge-game',gD);bd('badge-quiz',qS>=3);bd('badge-contrib',cD);
+  bd('pb-explorer',mC>=1);bd('pb-hygiene',mC>=3);bd('pb-game',gD);bd('pb-quiz',qS>=3);bd('pb-contrib',cD);
 }
 
-// ══════════════════════════════════════════════════════════
 // MODULE TABS
-// ══════════════════════════════════════════════════════════
-function switchMTab(id, btn) {
-  document.querySelectorAll('.mpanel').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('.mtab').forEach(function(t){ t.classList.remove('active'); });
-  var panel = document.getElementById('mtab-'+id); if(panel) panel.classList.add('active');
-  if(btn) btn.classList.add('active');
-  modulesVisited[id] = true; saveProgress(); renderProgress();
+function switchMTab(id,btn){
+  document.querySelectorAll('.mpanel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.mtab').forEach(function(t){t.classList.remove('active');});
+  var panel=document.getElementById('mtab-'+id);if(panel)panel.classList.add('active');
+  if(btn)btn.classList.add('active');
+  modulesVisited[id]=true;saveProgress();renderProgress();
 }
 
-// ══════════════════════════════════════════════════════════
 // DRAG AND DROP
-// ══════════════════════════════════════════════════════════
-var dragEl = null;
-function shuffleBank(bank) {
-  var items = Array.prototype.slice.call(bank.querySelectorAll('.drag-label'));
-  for(var i=items.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); bank.appendChild(items[j]); var t=items[j]; items[j]=items[i]; items[i]=t; }
+var dragEl=null;
+function shuffleBank(bank){
+  var items=Array.prototype.slice.call(bank.querySelectorAll('.drag-label'));
+  for(var i=items.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    bank.appendChild(items[j]);
+    var t=items[j];items[j]=items[i];items[i]=t;
+  }
 }
-function bindLabels() {
+function bindLabels(){
   document.querySelectorAll('.drag-label').forEach(function(el){
-    el.addEventListener('dragstart',function(){ dragEl=el; el.style.opacity='.45'; });
-    el.addEventListener('dragend',  function(){ if(dragEl) dragEl.style.opacity='1'; dragEl=null; });
+    el.addEventListener('dragstart',function(){dragEl=el;el.style.opacity='.45';});
+    el.addEventListener('dragend',function(){if(dragEl)dragEl.style.opacity='1';dragEl=null;});
     el.addEventListener('touchstart',touchStart,{passive:true});
-    el.addEventListener('touchend',  touchEnd);
+    el.addEventListener('touchend',touchEnd);
   });
 }
 function initDND(){
-  var sb=document.getElementById('bank-soap'); var rb=document.getElementById('bank-rub');
-  if(sb) shuffleBank(sb); if(rb) shuffleBank(rb);
+  var sb=document.getElementById('bank-soap'),rb=document.getElementById('bank-rub');
+  if(sb)shuffleBank(sb);if(rb)shuffleBank(rb);
   bindLabels();
   document.querySelectorAll('.drop-zone').forEach(function(z){
-    z.addEventListener('dragover', function(e){ e.preventDefault(); z.classList.add('drag-over'); });
-    z.addEventListener('dragleave',function(){ z.classList.remove('drag-over'); });
-    z.addEventListener('drop',     function(e){ e.preventDefault(); dropOnZone(z); });
-    z.addEventListener('touchmove',function(e){ e.preventDefault(); },{passive:false});
+    z.addEventListener('dragover',function(e){e.preventDefault();z.classList.add('drag-over');});
+    z.addEventListener('dragleave',function(){z.classList.remove('drag-over');});
+    z.addEventListener('drop',function(e){e.preventDefault();dropOnZone(z);});
+    z.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
   });
 }
 var touchDrag=null,touchClone=null;
-function touchStart(e){ touchDrag=e.currentTarget; touchClone=touchDrag.cloneNode(true); touchClone.style.cssText='position:fixed;z-index:9999;opacity:.85;pointer-events:none;transform:scale(1.05)'; document.body.appendChild(touchClone); moveTouchClone(e.touches[0]); }
-function moveTouchClone(t){ if(!touchClone) return; touchClone.style.left=(t.clientX-60)+'px'; touchClone.style.top=(t.clientY-20)+'px'; }
-function touchEnd(e){ if(touchClone){ document.body.removeChild(touchClone); touchClone=null; } if(!touchDrag) return; var t=e.changedTouches[0]; var el=document.elementFromPoint(t.clientX,t.clientY); var z=el?el.closest('.drop-zone'):null; if(z){ dragEl=touchDrag; dropOnZone(z); } touchDrag=null; dragEl=null; }
-document.addEventListener('touchmove',function(e){ if(touchClone) moveTouchClone(e.touches[0]); },{passive:true});
-function dropOnZone(zone){ if(!dragEl) return; zone.classList.remove('drag-over','correct','wrong'); var game=zone.closest('.dnd-game').id.replace('dnd-',''); var slot=zone.querySelector('.drop-slot'); var prev=zone.dataset.current; if(prev){ var bk=document.getElementById('bank-'+game); if(bk){ var pe=bk.querySelector('[data-label="'+prev+'"]'); if(pe) pe.classList.remove('placed'); } } slot.textContent=dragEl.textContent; slot.classList.add('filled'); zone.dataset.current=dragEl.dataset.label; dragEl.classList.add('placed'); }
-function checkDND(game){ var zones=document.querySelectorAll('#grid-'+game+' .drop-zone'); var ok=0,total=zones.length,filled=0; zones.forEach(function(z){ var c=z.dataset.current,a=z.dataset.answer; if(c){ filled++; if(c===a){z.classList.add('correct');z.classList.remove('wrong');ok++;}else{z.classList.add('wrong');z.classList.remove('correct');} } }); var fb=document.getElementById('fb-'+game); if(filled<total){ if(fb) fb.textContent='Please fill all '+total+' slots first.'; return; } if(ok===total){ if(fb) fb.textContent='Perfect! All '+total+' steps correct! 🎉'; if(!window._gameCompleted){ window._gameCompleted=true; saveProgress(); renderProgress(); showToast('Game Master badge earned! 🎮','success'); } }else{ if(fb) fb.textContent=ok+'/'+total+' correct — red slots need fixing.'; } }
-function resetDND(game){ document.querySelectorAll('#grid-'+game+' .drop-zone').forEach(function(z){ z.classList.remove('correct','wrong','drag-over'); delete z.dataset.current; var sl=z.querySelector('.drop-slot'); sl.textContent='Drop here'; sl.classList.remove('filled'); }); var bk=document.getElementById('bank-'+game); bk.querySelectorAll('.drag-label').forEach(function(el){ el.classList.remove('placed'); el.style.opacity='1'; }); var fb=document.getElementById('fb-'+game); if(fb) fb.textContent=''; shuffleBank(bk); bindLabels(); }
-function switchDND(id,btn){ document.querySelectorAll('.dnd-game').forEach(function(g){ g.classList.remove('active'); }); document.querySelectorAll('.dnd-tab').forEach(function(t){ t.classList.remove('active'); }); var g=document.getElementById('dnd-'+id); if(g) g.classList.add('active'); if(btn) btn.classList.add('active'); }
+function touchStart(e){
+  touchDrag=e.currentTarget;
+  touchClone=touchDrag.cloneNode(true);
+  touchClone.style.cssText='position:fixed;z-index:9999;opacity:.85;pointer-events:none;transform:scale(1.05)';
+  document.body.appendChild(touchClone);moveTouchClone(e.touches[0]);
+}
+function moveTouchClone(t){if(!touchClone)return;touchClone.style.left=(t.clientX-60)+'px';touchClone.style.top=(t.clientY-20)+'px';}
+function touchEnd(e){
+  if(touchClone){document.body.removeChild(touchClone);touchClone=null;}
+  if(!touchDrag)return;
+  var t=e.changedTouches[0],el=document.elementFromPoint(t.clientX,t.clientY);
+  var z=el?el.closest('.drop-zone'):null;
+  if(z){dragEl=touchDrag;dropOnZone(z);}
+  touchDrag=null;dragEl=null;
+}
+document.addEventListener('touchmove',function(e){if(touchClone)moveTouchClone(e.touches[0]);},{passive:true});
+function dropOnZone(zone){
+  if(!dragEl)return;
+  zone.classList.remove('drag-over','correct','wrong');
+  var game=zone.closest('.dnd-game').id.replace('dnd-','');
+  var slot=zone.querySelector('.drop-slot'),prev=zone.dataset.current;
+  if(prev){var bk=document.getElementById('bank-'+game);if(bk){var pe=bk.querySelector('[data-label="'+prev+'"]');if(pe)pe.classList.remove('placed');}}
+  slot.textContent=dragEl.textContent;slot.classList.add('filled');
+  zone.dataset.current=dragEl.dataset.label;dragEl.classList.add('placed');
+}
+function checkDND(game){
+  var zones=document.querySelectorAll('#grid-'+game+' .drop-zone'),ok=0,total=zones.length,filled=0;
+  zones.forEach(function(z){
+    var c=z.dataset.current,a=z.dataset.answer;
+    if(c){filled++;if(c===a){z.classList.add('correct');z.classList.remove('wrong');ok++;}else{z.classList.add('wrong');z.classList.remove('correct');}}
+  });
+  var fb=document.getElementById('fb-'+game);
+  if(filled<total){if(fb)fb.textContent='Fill all '+total+' slots first.';return;}
+  if(ok===total){
+    if(fb)fb.textContent='Perfect! All '+total+' steps correct!';
+    if(!window._gameCompleted){window._gameCompleted=true;saveProgress();renderProgress();showToast('Game Master badge earned!','success');}
+  }else{if(fb)fb.textContent=ok+'/'+total+' correct -- red slots need fixing.';}
+}
+function resetDND(game){
+  document.querySelectorAll('#grid-'+game+' .drop-zone').forEach(function(z){
+    z.classList.remove('correct','wrong','drag-over');delete z.dataset.current;
+    var sl=z.querySelector('.drop-slot');sl.textContent='Drop here';sl.classList.remove('filled');
+  });
+  var bk=document.getElementById('bank-'+game);
+  bk.querySelectorAll('.drag-label').forEach(function(el){el.classList.remove('placed');el.style.opacity='1';});
+  var fb=document.getElementById('fb-'+game);if(fb)fb.textContent='';
+  shuffleBank(bk);bindLabels();
+}
+function switchDND(id,btn){
+  document.querySelectorAll('.dnd-game').forEach(function(g){g.classList.remove('active');});
+  document.querySelectorAll('.dnd-tab').forEach(function(t){t.classList.remove('active');});
+  var g=document.getElementById('dnd-'+id);if(g)g.classList.add('active');
+  if(btn)btn.classList.add('active');
+}
 
-// ══════════════════════════════════════════════════════════
 // QUIZ
-// ══════════════════════════════════════════════════════════
 var setMap={s1:{qs:['q1','q2','q3','q4','q5'],label:'Soap & Water'},s2:{qs:['q6','q7','q8','q9','q10'],label:'Alcohol Rub'},s3:{qs:['q11','q12','q13','q14','q15'],label:'When to Perform'}};
-var fbText={q1:{c:'Correct! WHO recommends 40-60 seconds.',w:'Incorrect. Answer: B (40-60 seconds).'},q2:{c:'Correct! Use the towel to turn off the tap.',w:'Incorrect. Answer: B.'},q3:{c:'Correct! Thumbs and fingertips are most missed.',w:'Incorrect. Answer: C.'},q4:{c:'Correct! Warm or cold water is fine.',w:'Incorrect. Answer: B.'},q5:{c:'Correct! Soap & water for visible soil/C.diff.',w:'Incorrect. Answer: C.'},q6:{c:'Correct! Rub 20-30 s until dry.',w:'Incorrect. Answer: B.'},q7:{c:'Correct! Never rinse — let it air-dry.',w:'Incorrect. Answer: C.'},q8:{c:'Correct! Effective vs most bacteria + enveloped viruses.',w:'Incorrect. Answer: B.'},q9:{c:'Correct! Apply a palmful to cover all surfaces.',w:'Incorrect. Answer: B.'},q10:{c:'Correct! Microorganisms hide under jewelry.',w:'Incorrect. Answer: C.'},q11:{c:'Correct! WHO identifies exactly 5 Moments.',w:'Incorrect. Answer: B.'},q12:{c:'Correct! Catheter insertion = aseptic task (Moment 2).',w:'Incorrect. Answer: B.'},q13:{c:'Correct! Gloves have micro-perforations.',w:'Incorrect. Answer: B.'},q14:{c:'Correct! Patient surroundings = WHO Moment 5.',w:'Incorrect. Answer: C.'},q15:{c:'Correct! HAI = acquired during care, not on admission.',w:'Incorrect. Answer: C.'}};
-function switchQSet(id,btn){ document.querySelectorAll('.qset-panel').forEach(function(p){ p.classList.remove('active'); }); document.querySelectorAll('.qset-btn').forEach(function(b){ b.classList.remove('active'); }); var p=document.getElementById('qset-'+id); if(p) p.classList.add('active'); if(btn) btn.classList.add('active'); }
-function sel(btn,qid,type){ var grp=document.getElementById(qid); if(grp.dataset.answered) return; grp.dataset.answered='1'; grp.querySelectorAll('.opt').forEach(function(o){ o.disabled=true; }); btn.classList.add(type==='c'?'correct':'wrong'); answers[qid]=(type==='c'); }
-function submitSet(setId){ var info=setMap[setId],score=0; info.qs.forEach(function(qid){ var grp=document.getElementById(qid); if(!grp.dataset.answered){ grp.dataset.answered='1'; grp.querySelectorAll('.opt').forEach(function(o){ o.disabled=true; }); answers[qid]=false; } var fb2=document.getElementById('fb-'+qid); if(answers[qid]){ score++; if(fb2){fb2.className='qfb show ok';fb2.textContent=fbText[qid].c;} }else{ if(fb2){fb2.className='qfb show bad';fb2.textContent=fbText[qid].w;} grp.querySelectorAll('.opt').forEach(function(o){ if(!o.classList.contains('wrong')) o.classList.add('correct'); }); } }); setScores[setId]=score; quizSetsCompleted[setId]=true; saveProgress(); renderProgress(); showToast('Set '+(setId.replace('s',''))+' submitted — '+score+'/5',score===5?'success':'info'); var pct=score/5*100,sc=document.getElementById('sc-'+setId); if(sc) sc.classList.add('show'); var scT=document.getElementById('sc-'+setId+'-text'),scM=document.getElementById('sc-'+setId+'-msg'); if(scT) scT.textContent=score+' / 5 — '+info.label; if(scM) scM.textContent=pct===100?'Perfect!':pct>=60?'Good — review missed items.':'Keep studying and retry!'; setTimeout(function(){ var pb=document.getElementById('pb-'+setId); if(pb) pb.style.width=pct+'%'; },100); var sub=document.getElementById('sub-'+setId); if(sub) sub.style.display='none'; if(sc) sc.scrollIntoView({behavior:'smooth',block:'start'}); if(setId==='s3'){ var total=(setScores.s1||0)+(setScores.s2||0)+(setScores.s3||0); var fd=document.getElementById('final-score-display'); if(fd){fd.style.display='block';fd.textContent='Total Score: '+total+'/15 ('+Math.round(total/15*100)+'%)';} var lba=document.getElementById('lb-submit-area'); if(lba) lba.style.display='flex'; if(window._currentUser&&window._firebaseReady) autoSaveScore(total); } }
-function autoSaveScore(total){ var uid=window._currentUser.uid; getUserDisplayName(uid).then(function(name){ window._fb.set(window._fb.ref(window._fb.db,'scores/'+uid),{name:name,total:total,s1:setScores.s1||0,s2:setScores.s2||0,s3:setScores.s3||0,timestamp:Date.now()}); loadLeaderboard(); }); }
-function resetSet(setId){ setMap[setId].qs.forEach(function(qid){ var grp=document.getElementById(qid); delete grp.dataset.answered; grp.querySelectorAll('.opt').forEach(function(o){ o.disabled=false; o.classList.remove('correct','wrong'); }); var fb2=document.getElementById('fb-'+qid); if(fb2) fb2.className='qfb'; delete answers[qid]; }); delete setScores[setId]; delete quizSetsCompleted[setId]; saveProgress(); renderProgress(); var sc=document.getElementById('sc-'+setId); if(sc) sc.classList.remove('show'); var pb=document.getElementById('pb-'+setId); if(pb) pb.style.width='0%'; var sub=document.getElementById('sub-'+setId); if(sub) sub.style.display=''; if(setId==='s3'){var fd=document.getElementById('final-score-display');if(fd)fd.style.display='none';var lba=document.getElementById('lb-submit-area');if(lba)lba.style.display='none';} window.scrollTo({top:0,behavior:'smooth'}); }
-function postScore(){ if(!window._currentUser){showAuthPage('login');return;} var total=(setScores.s1||0)+(setScores.s2||0)+(setScores.s3||0); autoSaveScore(total); var lba=document.getElementById('lb-submit-area'); if(lba) lba.innerHTML='<p style="color:var(--teal-light);font-size:.85rem;padding:.5rem 0">Score posted! ✅</p>'; }
+var fbText={
+  q1:{c:'Correct! WHO recommends 40-60 seconds.',w:'Incorrect. Answer: B (40-60 seconds).'},
+  q2:{c:'Correct! Use the towel to turn off the tap.',w:'Incorrect. Answer: B.'},
+  q3:{c:'Correct! Thumbs and fingertips most missed.',w:'Incorrect. Answer: C.'},
+  q4:{c:'Correct! Warm or cold water is fine.',w:'Incorrect. Answer: B.'},
+  q5:{c:'Correct! Soap & water for visible soil/C.diff.',w:'Incorrect. Answer: C.'},
+  q6:{c:'Correct! Rub 20-30s until dry.',w:'Incorrect. Answer: B.'},
+  q7:{c:'Correct! Never rinse -- let it air-dry.',w:'Incorrect. Answer: C.'},
+  q8:{c:'Correct! Effective vs most bacteria + enveloped viruses.',w:'Incorrect. Answer: B.'},
+  q9:{c:'Correct! Apply a palmful to cover all surfaces.',w:'Incorrect. Answer: B.'},
+  q10:{c:'Correct! Microorganisms hide under jewelry.',w:'Incorrect. Answer: C.'},
+  q11:{c:'Correct! WHO identifies exactly 5 Moments.',w:'Incorrect. Answer: B.'},
+  q12:{c:'Correct! Catheter insertion = aseptic task.',w:'Incorrect. Answer: B.'},
+  q13:{c:'Correct! Gloves have micro-perforations.',w:'Incorrect. Answer: B.'},
+  q14:{c:'Correct! Patient surroundings = WHO Moment 5.',w:'Incorrect. Answer: C.'},
+  q15:{c:'Correct! HAI = acquired during care, not on admission.',w:'Incorrect. Answer: C.'}
+};
+function switchQSet(id,btn){
+  document.querySelectorAll('.qset-panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.qset-btn').forEach(function(b){b.classList.remove('active');});
+  var p=document.getElementById('qset-'+id);if(p)p.classList.add('active');if(btn)btn.classList.add('active');
+}
+function sel(btn,qid,type){
+  var grp=document.getElementById(qid);if(grp.dataset.answered)return;
+  grp.dataset.answered='1';grp.querySelectorAll('.opt').forEach(function(o){o.disabled=true;});
+  btn.classList.add(type==='c'?'correct':'wrong');answers[qid]=(type==='c');
+}
+function submitSet(setId){
+  var info=setMap[setId],score=0;
+  info.qs.forEach(function(qid){
+    var grp=document.getElementById(qid);
+    if(!grp.dataset.answered){grp.dataset.answered='1';grp.querySelectorAll('.opt').forEach(function(o){o.disabled=true;});answers[qid]=false;}
+    var fb2=document.getElementById('fb-'+qid);
+    if(answers[qid]){score++;if(fb2){fb2.className='qfb show ok';fb2.textContent=fbText[qid].c;}}
+    else{if(fb2){fb2.className='qfb show bad';fb2.textContent=fbText[qid].w;}grp.querySelectorAll('.opt').forEach(function(o){if(!o.classList.contains('wrong'))o.classList.add('correct');});}
+  });
+  setScores[setId]=score;quizSetsCompleted[setId]=true;saveProgress();renderProgress();
+  showToast('Set '+(setId.replace('s',''))+' submitted -- '+score+'/5',score===5?'success':'info');
+  var pct=score/5*100,sc=document.getElementById('sc-'+setId);
+  if(sc)sc.classList.add('show');
+  var scT=document.getElementById('sc-'+setId+'-text'),scM=document.getElementById('sc-'+setId+'-msg');
+  if(scT)scT.textContent=score+' / 5 -- '+info.label;
+  if(scM)scM.textContent=pct===100?'Perfect!':pct>=60?'Good -- review missed items.':'Keep studying!';
+  setTimeout(function(){var pb=document.getElementById('pb-'+setId);if(pb)pb.style.width=pct+'%';},100);
+  var sub=document.getElementById('sub-'+setId);if(sub)sub.style.display='none';
+  if(sc)sc.scrollIntoView({behavior:'smooth',block:'start'});
+  if(setId==='s3'){
+    var total=(setScores.s1||0)+(setScores.s2||0)+(setScores.s3||0);
+    var fd=document.getElementById('final-score-display');
+    if(fd){fd.style.display='block';fd.textContent='Total Score: '+total+'/15 ('+Math.round(total/15*100)+'%)';}
+    var lba=document.getElementById('lb-submit-area');if(lba)lba.style.display='flex';
+    if(window._currentUser&&window._firebaseReady)autoSaveScore(total);
+  }
+}
+function autoSaveScore(total){
+  var uid=window._currentUser.uid;
+  getUserDisplayName(uid).then(function(name){
+    window._fb.set(window._fb.ref(window._fb.db,'scores/'+uid),{name:name,total:total,s1:setScores.s1||0,s2:setScores.s2||0,s3:setScores.s3||0,timestamp:Date.now()});
+    loadLeaderboard();
+  });
+}
+function resetSet(setId){
+  setMap[setId].qs.forEach(function(qid){
+    var grp=document.getElementById(qid);delete grp.dataset.answered;
+    grp.querySelectorAll('.opt').forEach(function(o){o.disabled=false;o.classList.remove('correct','wrong');});
+    var fb2=document.getElementById('fb-'+qid);if(fb2)fb2.className='qfb';
+    delete answers[qid];
+  });
+  delete setScores[setId];delete quizSetsCompleted[setId];
+  saveProgress();renderProgress();
+  var sc=document.getElementById('sc-'+setId);if(sc)sc.classList.remove('show');
+  var pb=document.getElementById('pb-'+setId);if(pb)pb.style.width='0%';
+  var sub=document.getElementById('sub-'+setId);if(sub)sub.style.display='';
+  if(setId==='s3'){
+    var fd=document.getElementById('final-score-display');if(fd)fd.style.display='none';
+    var lba=document.getElementById('lb-submit-area');if(lba)lba.style.display='none';
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function postScore(){
+  if(!window._currentUser){showAuthPage('login');return;}
+  var total=(setScores.s1||0)+(setScores.s2||0)+(setScores.s3||0);
+  autoSaveScore(total);
+  var lba=document.getElementById('lb-submit-area');
+  if(lba)lba.innerHTML='<p style="color:var(--teal-light);font-size:.85rem;padding:.5rem 0">Score posted!</p>';
+}
 
-// ══════════════════════════════════════════════════════════
 // LEADERBOARD
-// ══════════════════════════════════════════════════════════
-function loadLeaderboard(){ if(!window._firebaseReady) return; var q=window._fb.query(window._fb.ref(window._fb.db,'scores'),window._fb.orderByChild('total')); window._fb.onValue(q,function(snap){ var data=snap.val(),list=document.getElementById('lb-list'); if(!list) return; if(!data){list.innerHTML='<div class="lb-empty">No scores yet — be the first!</div>';return;} var rows=Object.values(data).sort(function(a,b){return b.total-a.total;}).slice(0,20); var html=''; rows.forEach(function(e,i){ var rank=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1); var isMe=window._currentUserName&&e.name===window._currentUserName; var style=isMe?' style="background:linear-gradient(90deg,#f0fdfa,#e0f2fe);border:1.5px solid var(--teal)"':''; html+='<div class="lb-row"'+style+'><div class="lb-rank">'+rank+'</div><div class="lb-name">'+e.name+(isMe?' <span style="font-size:.7rem;color:var(--teal);font-weight:700">(You)</span>':'')+' </div><div><div class="lb-score">'+e.total+'/15</div><div class="lb-set">'+Math.round(e.total/15*100)+'%</div></div></div>'; }); list.innerHTML=html; }); }
+function loadLeaderboard(){
+  if(!window._firebaseReady)return;
+  var q=window._fb.query(window._fb.ref(window._fb.db,'scores'),window._fb.orderByChild('total'));
+  window._fb.onValue(q,function(snap){
+    var data=snap.val(),list=document.getElementById('lb-list');
+    if(!list)return;
+    if(!data){list.innerHTML='<div class="lb-empty">No scores yet -- be the first!</div>';return;}
+    var rows=Object.values(data).sort(function(a,b){return b.total-a.total;}).slice(0,20);
+    var h='';
+    rows.forEach(function(e,i){
+      var rank=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':(i+1);
+      var isMe=window._currentUserName&&e.name===window._currentUserName;
+      var sty=isMe?' style="background:linear-gradient(90deg,#f0fdfa,#e0f2fe);border:1.5px solid var(--teal)"':'';
+      h+='<div class="lb-row"'+sty+'>';
+      h+='<div class="lb-rank">'+rank+'</div>';
+      h+='<div class="lb-name">'+e.name+(isMe?' <span style="font-size:.7rem;color:var(--teal);font-weight:700">(You)</span>':'')+' </div>';
+      h+='<div><div class="lb-score">'+e.total+'/15</div><div class="lb-set">'+Math.round(e.total/15*100)+'%</div></div>';
+      h+='</div>';
+    });
+    list.innerHTML=h;
+  });
+}
 
-// ══════════════════════════════════════════════════════════
 // FORUM
-// ══════════════════════════════════════════════════════════
-function loadForumPosts(){ if(!window._firebaseReady||!window._currentUser) return; var q=window._fb.query(window._fb.ref(window._fb.db,'forum'),window._fb.orderByChild('timestamp')); window._fb.onValue(q,function(snap){ var data=snap.val(),list=document.getElementById('forum-posts-list'); if(!list) return; if(!data){list.innerHTML='<p style="color:var(--muted);font-size:.88rem;padding:1rem 0">No posts yet — be the first!</p>';return;} var pairs=Object.entries(data).sort(function(a,b){return b[1].timestamp-a[1].timestamp;}).slice(0,30); var colors=['#0d9488','#f59e0b','#8b5cf6','#ef4444','#3b82f6','#ec4899']; var html=''; pairs.forEach(function(pair,i){ var key=pair[0],p=pair[1],color=colors[i%colors.length]; var init=(p.author||'?')[0].toUpperCase(); var d=new Date(p.timestamp); var date=d.toLocaleDateString('en-PH',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'}); var safe=(p.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'); html+='<div class="forum-post"><div class="forum-meta"><div class="avatar" style="background:'+color+'">'+init+'</div><div><div class="poster-name">'+(p.author||'Student')+'</div><div class="poster-time">'+date+'</div></div></div><div class="forum-text">'+safe+'</div><div class="forum-actions"><button class="forum-btn" onclick="likePost(\''+key+'\',this)">'+(p.likes||0)+' Likes</button></div></div>'; }); list.innerHTML=html; }); }
-function likePost(key){ if(!window._firebaseReady||!window._currentUser) return; window._fb.get(window._fb.ref(window._fb.db,'forum/'+key+'/likes')).then(function(snap){ window._fb.set(window._fb.ref(window._fb.db,'forum/'+key+'/likes'),(snap.exists()?snap.val():0)+1); }); }
-function postComment(){ var inp=document.getElementById('comment-input'); var text=inp?inp.value.trim():''; if(!text) return; if(!window._currentUser){showAuthPage('login');return;} if(!window._firebaseReady){showToast('Not connected.','error');return;} var name=window._currentUserName||(window._currentUser.displayName)||(window._currentUser.email?window._currentUser.email.split('@')[0]:'Student'); var postBtn=document.querySelector('#comment-box-area .post-btn'); if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting…';} window._fb.push(window._fb.ref(window._fb.db,'forum'),{author:name,text:text,timestamp:Date.now(),likes:0}).then(function(){ inp.value=''; var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500'; window._forumPosted=true; saveProgress(); renderProgress(); if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';} showToast('Comment posted! 💬','success'); }).catch(function(e){ if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';} showToast('Post failed — check Firebase rules are in Test Mode.','error'); console.error('postComment:',e); }); }
+function loadForumPosts(){
+  if(!window._firebaseReady||!window._currentUser)return;
+  var q=window._fb.query(window._fb.ref(window._fb.db,'forum'),window._fb.orderByChild('timestamp'));
+  window._fb.onValue(q,function(snap){
+    var data=snap.val(),list=document.getElementById('forum-posts-list');
+    if(!list)return;
+    if(!data){list.innerHTML='<p style="color:var(--muted);font-size:.88rem;padding:1rem 0">No posts yet -- be the first!</p>';return;}
+    var pairs=Object.entries(data).sort(function(a,b){return b[1].timestamp-a[1].timestamp;}).slice(0,30);
+    var colors=['#0d9488','#f59e0b','#8b5cf6','#ef4444','#3b82f6','#ec4899'];
+    var h='';
+    pairs.forEach(function(pair,i){
+      var key=pair[0],p=pair[1],color=colors[i%colors.length];
+      var init=(p.author||'?')[0].toUpperCase();
+      var d=new Date(p.timestamp);
+      var date=d.toLocaleDateString('en-PH',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+      var safe=(p.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').split('\n').join('<br>').split('\r').join('');//_REPLACED_
+      h+='<div class="forum-post">';
+      h+='<div class="forum-meta"><div class="avatar" style="background:'+color+'">'+init+'</div>';
+      h+='<div><div class="poster-name">'+(p.author||'Student')+'</div><div class="poster-time">'+date+'</div></div></div>';
+      h+='<div class="forum-text">'+safe+'</div>';
+            h+='<div class="forum-actions"><button class="forum-btn" onclick="likePost(\'' + key + '\')">'+(p.likes||0)+' Likes</button></div>';
+      h+='</div>';
+    });
+    list.innerHTML=h;
+  });
+}
+function likePost(key){
+  if(!window._firebaseReady||!window._currentUser)return;
+  window._fb.get(window._fb.ref(window._fb.db,'forum/'+key+'/likes')).then(function(snap){
+    window._fb.set(window._fb.ref(window._fb.db,'forum/'+key+'/likes'),(snap.exists()?snap.val():0)+1);
+  });
+}
+function postComment(){
+  var inp=document.getElementById('comment-input'),text=inp?inp.value.trim():'';
+  if(!text)return;
+  if(!window._currentUser){showAuthPage('login');return;}
+  if(!window._firebaseReady){showToast('Not connected.','error');return;}
+  var name=window._currentUserName||(window._currentUser.displayName)||(window._currentUser.email||'').split('@')[0]||'Student';
+  var postBtn=document.querySelector('#comment-box-area .post-btn');
+  if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';}
+  window._fb.push(window._fb.ref(window._fb.db,'forum'),{author:name,text:text,timestamp:Date.now(),likes:0})
+    .then(function(){
+      inp.value='';
+      var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500';
+      window._forumPosted=true;saveProgress();renderProgress();
+      if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';}
+      showToast('Comment posted!','success');
+    })
+    .catch(function(e){
+      if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';}
+      showToast('Post failed -- check Firebase rules.','error');
+      console.error(e);
+    });
+}
 
-// ══════════════════════════════════════════════════════════
-// INFOGRAPHIC FULLSCREEN
-// ══════════════════════════════════════════════════════════
-function openFS(src,emoji){ var ov=document.getElementById('fs-overlay'),img=document.getElementById('fs-img'),em=document.getElementById('fs-emoji'),dl=document.getElementById('fs-dl'); img.style.transform='scale(1)'; window._fsScale=1; if(src&&src!=='undefined'&&src!==''){ img.src=src;img.style.display='';em.style.display='none';if(dl){dl.href=src;dl.style.display='flex';} }else{ img.style.display='none';em.textContent=emoji||'?';em.style.display='';if(dl)dl.style.display='none'; } ov.classList.add('open'); document.body.style.overflow='hidden'; }
-function closeFS(){ var ov=document.getElementById('fs-overlay');if(ov)ov.classList.remove('open'); document.body.style.overflow=''; }
+// FULLSCREEN
+function openFS(src,emoji){
+  var ov=document.getElementById('fs-overlay'),img=document.getElementById('fs-img'),em=document.getElementById('fs-emoji');
+  if(src&&src!=='undefined'&&src!==''){img.src=src;img.style.display='';em.style.display='none';}
+  else{img.style.display='none';em.textContent=emoji||'?';em.style.display='';}
+  ov.classList.add('open');document.body.style.overflow='hidden';
+}
+function closeFS(){var ov=document.getElementById('fs-overlay');if(ov)ov.classList.remove('open');document.body.style.overflow='';}
 
-// ══════════════════════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════════════════
-document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeFS(); var lp=document.getElementById('auth-login-page'); var rp=document.getElementById('auth-register-page'); if((lp&&lp.style.display==='flex')||(rp&&rp.style.display==='flex')) SP('home'); } });
-
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFS();});
 document.addEventListener('DOMContentLoaded',function(){
   initDND();
-
-  // Fullscreen overlay: backdrop click + scroll zoom
-  var ov=document.getElementById('fs-overlay');
-  if(ov){
-    ov.addEventListener('click',function(e){if(e.target===ov)closeFS();});
-    ov.addEventListener('wheel',function(e){ var img=document.getElementById('fs-img'); if(!img||img.style.display==='none') return; e.preventDefault(); window._fsScale=(window._fsScale||1)+(e.deltaY<0?.15:-.15); window._fsScale=Math.max(.5,Math.min(4,window._fsScale)); img.style.transform='scale('+window._fsScale+')'; },{passive:false});
-  }
-
-  var cb=document.getElementById('comment-box-area'); var gw=document.getElementById('guest-comment-wall');
-  if(cb) cb.style.display='none'; if(gw) gw.style.display='';
+  var cb=document.getElementById('comment-box-area'),gw=document.getElementById('guest-comment-wall');
+  if(cb)cb.style.display='none';if(gw)gw.style.display='';
   renderProgress();
-
-  var ci=document.getElementById('comment-input');
-  if(ci){
-    ci.addEventListener('input',function(){ var cc=document.getElementById('char-count');if(cc)cc.textContent=ci.value.length+'/500'; });
-    ci.addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();postComment();} });
+  // Add Post button + char counter
+  var cbox=document.getElementById('comment-box-area');
+  if(cbox&&!cbox.querySelector('.post-btn')){
+    var ci=document.getElementById('comment-input');
+    if(ci){
+      var row=document.createElement('div');row.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-top:.5rem';
+      var cc=document.createElement('span');cc.id='char-count';cc.style.cssText='font-size:.74rem;color:var(--muted)';cc.textContent='0/500';
+      var pb=document.createElement('button');pb.className='post-btn';pb.textContent='Post';pb.style.cssText='width:auto;padding:.65rem 1.6rem';pb.onclick=postComment;
+      ci.addEventListener('input',function(){cc.textContent=ci.value.length+'/500';});
+      ci.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();postComment();}});
+      row.appendChild(cc);row.appendChild(pb);cbox.appendChild(row);
+    }
   }
-
-  // Comment box: add post-btn + char counter if not already present
-  var commentBox=document.getElementById('comment-box-area');
-  if(commentBox&&!commentBox.querySelector('.post-btn')){
-    var postBtn=document.createElement('button'); postBtn.className='post-btn'; postBtn.textContent='Post';
-    postBtn.style.cssText='width:auto;padding:.65rem 1.6rem;'; postBtn.onclick=postComment;
-    var row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-top:.5rem';
-    var cc2=document.createElement('span'); cc2.id='char-count'; cc2.style.cssText='font-size:.74rem;color:var(--muted)'; cc2.textContent='0/500';
-    row.appendChild(cc2); row.appendChild(postBtn); commentBox.appendChild(row);
-  }
-
-  window.addEventListener('scroll',function(){ var btn=document.getElementById('scroll-top-btn'); if(btn) btn.classList.toggle('visible',window.scrollY>400); });
+  window.addEventListener('scroll',function(){
+    var btn=document.getElementById('scroll-top-btn');
+    if(btn)btn.classList.toggle('visible',window.scrollY>400);
+  });
   setTimeout(loadLeaderboard,1400);
 });
 </script>
