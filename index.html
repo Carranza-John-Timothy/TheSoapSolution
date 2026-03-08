@@ -331,12 +331,14 @@ nav.top-nav{
 .user-logout:hover{color:#ef4444}
 
 /* ═══ FULLSCREEN INFOGRAPHIC ═══ */
-.fs-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.92);align-items:center;justify-content:center;padding:1rem;cursor:zoom-out}
+.fs-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.93);align-items:center;justify-content:center;padding:1rem;cursor:zoom-out}
 .fs-overlay.open{display:flex}
-.fs-overlay img{max-width:96vw;max-height:92vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.fs-overlay img{max-width:90vw;max-height:85vh;border-radius:10px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5);cursor:default;transition:transform .2s;transform-origin:center center}
 .fs-overlay .fs-emoji{font-size:clamp(6rem,20vw,12rem)}
 .fs-close{position:fixed;top:1rem;right:1.2rem;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:1.5rem;width:42px;height:42px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:601;transition:background .18s}
 .fs-close:hover{background:rgba(255,255,255,.25)}
+.fs-download-btn{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;text-decoration:none;padding:.6rem 1.5rem;border-radius:25px;font-size:.82rem;font-weight:600;z-index:601;display:flex;align-items:center;gap:.4rem;box-shadow:0 4px 14px rgba(0,0,0,.3);transition:background .18s}
+.fs-download-btn:hover{background:var(--teal-dark)}
 .info-card{cursor:zoom-in;transition:transform .2s,box-shadow .2s}
 .info-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.1)}
 
@@ -348,23 +350,6 @@ nav.top-nav{
 .forum-logged-in.show{display:flex}
 .forum-logged-in p{color:#166534;font-size:.87rem;flex:1}
 .forum-logged-in button{background:none;border:1px solid #86efac;color:#166534;padding:.4rem .85rem;border-radius:7px;font-size:.78rem;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
-
-
-/* Toast notifications */
-.toast-container { position:fixed; bottom:calc(var(--bnav-h) + .75rem); right:1rem; z-index:800; display:flex; flex-direction:column; gap:.5rem; pointer-events:none; }
-@media(min-width:641px){ .toast-container { bottom:1.25rem; } }
-.toast { background:var(--ink); color:#fff; padding:.75rem 1.1rem; border-radius:10px; font-size:.84rem; font-weight:500; max-width:280px; box-shadow:0 8px 24px rgba(0,0,0,.3); animation:toastIn .3s ease; pointer-events:all; display:flex; align-items:center; gap:.5rem; }
-.toast.success { border-left:3px solid var(--green); }
-.toast.error   { border-left:3px solid var(--red); }
-.toast.info    { border-left:3px solid var(--teal-light); }
-@keyframes toastIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-@keyframes toastOut { to{opacity:0;transform:translateY(12px)} }
-
-
-.scroll-top { position:fixed; bottom:calc(var(--bnav-h) + 4.5rem); right:1rem; z-index:400; width:40px; height:40px; border-radius:50%; background:var(--teal); color:#fff; border:none; font-size:1.1rem; cursor:pointer; display:none; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,.2); transition:all .2s; }
-.scroll-top.visible { display:flex; }
-.scroll-top:hover { background:var(--teal-dark); transform:translateY(-2px); }
-@media(min-width:641px){ .scroll-top { bottom:4.5rem; } }
 
 /* ═══ FOOTER ═══ */
 footer{background:var(--ink);color:#475569;text-align:center;padding:1.75rem 1rem;font-size:clamp(.73rem,2vw,.8rem);line-height:1.9}
@@ -700,9 +685,9 @@ footer strong{color:var(--teal-light)}
     <div class="resources-grid">
       <div class="res-card"><div class="res-img">🌐<img src="" alt="" onerror="this.style.display='none'"/></div><div class="res-body"><h3>WHO Hand Hygiene Guidelines</h3><p>Official WHO guidelines including the 5 Moments framework and evidence-based recommendations.</p><a class="res-link" href="https://www.who.int/teams/integrated-health-services/infection-prevention-control/hand-hygiene" target="_blank" rel="noopener">Visit WHO ↗</a></div></div>
       <div class="res-card"><div class="res-img">🇺🇸</div><div class="res-body"><h3>CDC Hand Hygiene in Healthcare</h3><p>Comprehensive CDC guidance covering all healthcare settings with clinical recommendations.</p><a class="res-link" href="https://www.cdc.gov/handhygiene/index.html" target="_blank" rel="noopener">Visit CDC ↗</a></div></div>
-      <div class="res-card"><div class="res-img">🖨</div><div class="res-body"><h3>WHO Printable Poster</h3><p>Step-by-step handwashing poster — print and display in clinical areas or simulation labs.</p><a class="res-link" href="https://www.who.int/docs/default-source/infection-prevention-and-control/hand-hygiene/your-5-moments-for-hand-hygiene.pdf" target="_blank" rel="noopener">Download PDF ↗</a></div></div>
-      <div class="res-card"><div class="res-img">📊</div><div class="res-body"><h3>HAI Statistics – CDC</h3><p>Data on healthcare-associated infections and the measurable impact of hand hygiene compliance.</p><a class="res-link" href="https://www.cdc.gov/hai/data/index.html" target="_blank" rel="noopener">View Data ↗</a></div></div>
-      <div class="res-card"><div class="res-img">🎓</div><div class="res-body"><h3>WHO e-Learning: Save Lives</h3><p>Free WHO online course on hand hygiene in healthcare — earn a certificate on completion.</p><a class="res-link" href="https://www.who.int/teams/integrated-health-services/infection-prevention-control/hand-hygiene/e-learning" target="_blank" rel="noopener">Start Course ↗</a></div></div>
+      <div class="res-card"><div class="res-img">🖨</div><div class="res-body"><h3>WHO Printable Poster</h3><p>Step-by-step handwashing poster — print and display in clinical areas or simulation labs.</p><a class="res-link" href="https://www.who.int/docs/default-source/patient-safety/how-to-handwash-poster.pdf" target="_blank" rel="noopener">Download PDF ↗</a></div></div>
+      <div class="res-card"><div class="res-img">📊</div><div class="res-body"><h3>HAI Statistics – CDC</h3><p>Data on healthcare-associated infections and the measurable impact of hand hygiene compliance.</p><a class="res-link" href="https://www.cdc.gov/healthcare-associated-infections/?CDC_AAref_Val=https://www.cdc.gov/hai/data/index.html" target="_blank" rel="noopener">View Data ↗</a></div></div>
+
       <div class="res-card"><div class="res-img">🧪</div><div class="res-body"><h3>IPC Resources – WHO</h3><p>WHO IPC materials on standard precautions, PPE, and hand hygiene bundles for nurses.</p><a class="res-link" href="https://www.who.int/teams/integrated-health-services/infection-prevention-control" target="_blank" rel="noopener">Explore ↗</a></div></div>
     </div>
 
@@ -757,21 +742,7 @@ footer strong{color:var(--teal-light)}
       <button onclick="doLogout()">Sign Out</button>
     </div>
 
-    <div class="progress-box">
-      <h2>🏆 Your Learning Progress</h2>
-      <p>Complete all modules and quiz sets to earn all badges. Log in to save your progress.</p>
-      <div class="badges" id="badge-list">
-        <div class="badge" id="badge-explorer">🥇 Module Explorer</div>
-        <div class="badge" id="badge-hygiene">🧼 Hygiene Advocate</div>
-        <div class="badge" id="badge-game">🎮 Game Master</div>
-        <div class="badge" id="badge-quiz">🏅 Quiz Champion</div>
-        <div class="badge" id="badge-contrib">⭐ Top Contributor</div>
-      </div>
-      <div class="prog-label">Modules Viewed: <span id="prog-modules-label">0/3</span></div>
-      <div class="prog-track"><div class="prog-fill" id="prog-modules" style="width:0%"></div></div>
-      <div class="prog-label">Quiz Progress: <span id="prog-quiz-label">0/15</span></div>
-      <div class="prog-track"><div class="prog-fill" id="prog-quiz" style="width:0%"></div></div>
-    </div>
+    <!-- Progress moved to Profile page -->
 
     <!-- Forum posts list -->
     <div id="forum-posts-list"></div>
@@ -781,7 +752,7 @@ footer strong{color:var(--teal-light)}
       <textarea id="comment-input" maxlength="500" placeholder="Share a clinical experience, ask a question, or add a tip… (Enter to post, Shift+Enter for new line)"></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem">
         <span id="char-count" style="font-size:.74rem;color:var(--muted)">0/500</span>
-        <button onclick="postComment()" style="width:auto;padding:.7rem 1.5rem">Post Comment</button>
+        <button class="post-btn" onclick="postComment()" style="width:auto;padding:.65rem 1.6rem">Post</button>
       </div>
     </div>
     <div id="guest-comment-wall" style="display:none;background:var(--sky);border:1px solid #bae6fd;border-radius:12px;padding:1.2rem;text-align:center;margin-top:1.5rem">
@@ -834,7 +805,10 @@ footer strong{color:var(--teal-light)}
       <div class="auth-err" id="login-err"></div>
     </div>
     <div id="auth-register" class="auth-panel">
-      <div class="form-group"><label>Display Name</label><input type="text" id="reg-name" placeholder="e.g. Maria Santos"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+        <div class="form-group"><label>First Name</label><input type="text" id="reg-firstname" placeholder="e.g. Maria"/></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="reg-lastname" placeholder="e.g. Santos"/></div>
+      </div>
       <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="your@email.com"/></div>
       <div class="form-group"><label>Password (min 6 chars)</label><input type="password" id="reg-pass" placeholder="Create password"/></div>
       <button class="auth-submit" onclick="doRegister()">Create Account</button>
@@ -844,16 +818,15 @@ footer strong{color:var(--teal-light)}
 </div>
 
 <!-- FULLSCREEN OVERLAY -->
-<div class="fs-overlay" id="fs-overlay" onclick="closeFS()">
-  <button class="fs-close" onclick="closeFS()">✕</button>
-  <img id="fs-img" src="" alt="" style="display:none"/>
+<div class="fs-overlay" id="fs-overlay">
+  <button class="fs-close" onclick="closeFS()" title="Close">✕</button>
+  <a id="fs-download-btn" class="fs-download-btn" href="#" download title="Download image">⬇ Download</a>
+  <img id="fs-img" src="" alt="" style="display:none" onclick="event.stopPropagation()"/>
   <div id="fs-emoji" class="fs-emoji" style="display:none"></div>
 </div>
 
-<button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
-<div class="toast-container" id="toast-container"></div>
 <footer>
-  <p>CleanHands Educational Portal · NCM 110L – Nursing Informatics Laboratory</p>
+  <p>TheSoapSolution Educational Portal · NCM 110L – Nursing Informatics Laboratory</p>
   <p>College of Health Sciences · Prepared by <strong>Group 5 – BSN 2205</strong> · Adviser: Cynthia P. Hernandez, RN, MAN</p>
   <p style="margin-top:.4rem">Content based on <strong>WHO</strong> and <strong>CDC</strong> guidelines. For educational and academic use only.</p>
 </footer>
@@ -891,92 +864,51 @@ function goTo(id) { SP(id); }
 // ============================================================
 // AUTH UI
 // ============================================================
-function applyProfileData(name, email) {
-  window._currentUserName  = name || window._currentUserName  || 'Student';
-  window._currentUserEmail = email || window._currentUserEmail || '';
-  var pn  = document.getElementById('profile-name');
-  var pe  = document.getElementById('profile-email');
-  var pab = document.getElementById('profile-avatar-big');
-  if (pn)  pn.textContent  = window._currentUserName;
-  if (pe)  pe.textContent  = window._currentUserEmail;
-  if (pab) pab.textContent = window._currentUserName[0].toUpperCase();
-  renderProgress();
-}
-
 function updateAuthUI(user) {
   try {
-    var btn  = document.getElementById('nav-auth-btn');
+    var btn = document.getElementById('nav-auth-btn');
     var chip = document.getElementById('user-chip');
+    var guestPrompt = document.getElementById('forum-guest-prompt');
+    var userBar = document.getElementById('forum-user-bar');
+    var commentBox = document.getElementById('comment-box-area');
+    var guestWall = document.getElementById('guest-comment-wall');
+    var profileGuest = document.getElementById('profile-guest');
+    var profileCard = document.getElementById('profile-card');
+    var profileName = document.getElementById('profile-name');
+    var profileEmail = document.getElementById('profile-email');
 
     if (user) {
-      // Resolve name immediately from auth object — no DB wait
-      var name  = user.displayName || (user.email ? user.email.split('@')[0] : 'Student');
+      var baseName = user.displayName || (user.email ? user.email.split('@')[0] : 'Student');
       var email = user.email || '';
-
-      // Cache right away so postComment and others can use it instantly
-      window._currentUserName  = name;
-      window._currentUserEmail = email;
-
-      // Nav chip
-      if (btn)  btn.style.display = 'none';
-      if (chip) chip.classList.add('show');
-      var av = document.getElementById('user-av');
-      var nm = document.getElementById('user-nm');
-      if (av) av.textContent = name[0].toUpperCase();
-      if (nm) nm.textContent = name;
-
-      // Forum
-      var guestPrompt = document.getElementById('forum-guest-prompt');
-      var userBar     = document.getElementById('forum-user-bar');
-      var commentBox  = document.getElementById('comment-box-area');
-      var guestWall   = document.getElementById('guest-comment-wall');
-      if (guestPrompt) guestPrompt.style.display = 'none';
-      if (userBar)     userBar.classList.add('show');
-      var fn = document.getElementById('forum-user-name');
-      if (fn) fn.textContent = name;
-      if (commentBox) commentBox.style.display = '';
-      if (guestWall)  guestWall.style.display  = 'none';
-
-      // Profile card — show immediately
-      var profileGuest = document.getElementById('profile-guest');
-      var profileCard  = document.getElementById('profile-card');
-      if (profileGuest) profileGuest.style.display = 'none';
-      if (profileCard)  profileCard.style.display  = '';
-      applyProfileData(name, email);
-
-      // Then refine with DB-stored display name
-      if (window._firebaseReady) {
-        getUserDisplayName(user.uid).then(function(resolvedName) {
-          if (resolvedName && resolvedName !== 'Student') {
-            window._currentUserName = resolvedName;
-            if (av) av.textContent = resolvedName[0].toUpperCase();
-            if (nm) nm.textContent = resolvedName;
-            if (fn) fn.textContent = resolvedName;
-            applyProfileData(resolvedName, email);
-          }
-          loadForumPosts();
-        });
-      } else {
+      getUserDisplayName(user.uid).then(function(resolvedName) {
+        var name = resolvedName || baseName;
+        if (btn) btn.style.display = 'none';
+        if (chip) chip.classList.add('show');
+        var av = document.getElementById('user-av');
+        var nm = document.getElementById('user-nm');
+        if (av && name) av.textContent = name[0].toUpperCase();
+        if (nm) nm.textContent = name;
+        if (guestPrompt) guestPrompt.style.display = 'none';
+        if (userBar) userBar.classList.add('show');
+        var fn = document.getElementById('forum-user-name');
+        if (fn) fn.textContent = name;
+        if (commentBox) commentBox.style.display = '';
+        if (guestWall) guestWall.style.display = 'none';
+        if (profileGuest) profileGuest.style.display = 'none';
+        if (profileCard) profileCard.style.display = '';
+        if (profileName) profileName.textContent = name;
+        if (profileEmail) profileEmail.textContent = email;
         loadForumPosts();
-      }
-
+      });
     } else {
-      window._currentUserName  = null;
-      window._currentUserEmail = null;
-      if (btn)  { btn.style.display = ''; btn.textContent = 'Sign In'; }
+      if (btn) { btn.style.display = ''; btn.textContent = 'Sign In'; }
       if (chip) chip.classList.remove('show');
-      var gp = document.getElementById('forum-guest-prompt');
-      var ub = document.getElementById('forum-user-bar');
-      var cb = document.getElementById('comment-box-area');
-      var gw = document.getElementById('guest-comment-wall');
-      var pg = document.getElementById('profile-guest');
-      var pc = document.getElementById('profile-card');
-      if (gp) gp.style.display = '';
-      if (ub) ub.classList.remove('show');
-      if (cb) cb.style.display = 'none';
-      if (gw) gw.style.display = '';
-      if (pg) pg.style.display = '';
-      if (pc) pc.style.display = 'none';
+      if (guestPrompt) guestPrompt.style.display = '';
+      if (userBar) userBar.classList.remove('show');
+      if (commentBox) commentBox.style.display = 'none';
+      if (guestWall) guestWall.style.display = '';
+      if (profileGuest) profileGuest.style.display = '';
+      if (profileCard) profileCard.style.display = 'none';
     }
   } catch(e) { console.warn('updateAuthUI error:', e); }
 }
@@ -1031,42 +963,52 @@ function doLogin() {
 
 function doRegister() {
   if (!window._firebaseReady) { document.getElementById('reg-err').textContent = 'Firebase not connected.'; return; }
-  var name = document.getElementById('reg-name').value.trim();
+  var firstName = document.getElementById('reg-firstname') ? document.getElementById('reg-firstname').value.trim() : '';
+  var lastName  = document.getElementById('reg-lastname')  ? document.getElementById('reg-lastname').value.trim()  : '';
   var email = document.getElementById('reg-email').value.trim();
-  var pass = document.getElementById('reg-pass').value;
-  var err = document.getElementById('reg-err');
-  if (!name) { err.textContent = 'Please enter a display name.'; return; }
-  err.style.color = ''; // reset to default (error) color
+  var pass  = document.getElementById('reg-pass').value;
+  var err   = document.getElementById('reg-err');
+  err.style.cssText = '';
+  if (!firstName) { err.textContent = 'Please enter your first name.'; return; }
+  if (!lastName)  { err.textContent = 'Please enter your last name.';  return; }
+  if (firstName.split(' ').length > 1 && !lastName) {
+    err.textContent = 'Please use separate First and Last name fields.'; return;
+  }
+  var fullName = firstName + ' ' + lastName;
+  err.style.cssText = 'color:#64748b';
   err.textContent = 'Creating account...';
   window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass)
     .then(function(result) {
       var user = result.user;
-      var uid = user.uid;
+      var uid  = user.uid;
       var tasks = [];
-      tasks.push(window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/name'), name));
+      tasks.push(window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/name'), fullName));
       if (window._fb.updateProfile) {
-        tasks.push(window._fb.updateProfile(user, { displayName: name }).catch(function(){}));
+        tasks.push(window._fb.updateProfile(user, { displayName: fullName }).catch(function(){}));
       }
-      // Keep the user logged in and return the user for the next step
       return Promise.all(tasks).then(function() { return user; });
     })
     .then(function(user) {
-      // Clear any old error and show a clear success confirmation
-      err.style.color = '#16a34a';
-      err.textContent = 'Account created successfully!';
-      // Proactively update UI right away
+      // Cache name immediately
+      window._currentUserName = fullName;
+      // Update auth UI
       if (typeof updateAuthUI === 'function') updateAuthUI(user);
+      // Show success inside modal then navigate
+      err.style.cssText = 'color:#059669;background:#d1fae5;border-radius:8px;padding:.65rem .9rem;font-weight:600;font-size:.85rem;text-align:center;display:block';
+      err.textContent = '✅ Account created! Welcome, ' + firstName + '!';
       setTimeout(function() {
+        err.style.cssText = '';
         err.textContent = '';
         closeAuth();
-        // Go straight to the forum so the logged‑in state is visible
-        SP('forum');
-      }, 1000);
+        showToast('Welcome to TheSoapSolution, ' + firstName + '! 🎉', 'success', 4500);
+        SP('profile');
+      }, 1600);
     })
     .catch(function(e) {
-      err.style.color = '';
-      if (e.code === 'auth/email-already-in-use') err.textContent = 'Email already registered. Sign in instead.';
+      err.style.cssText = '';
+      if (e.code === 'auth/email-already-in-use') err.textContent = 'Email already registered — sign in instead.';
       else if (e.code === 'auth/weak-password') err.textContent = 'Password must be at least 6 characters.';
+      else if (e.code === 'auth/invalid-email') err.textContent = 'Please enter a valid email address.';
       else err.textContent = e.message;
     });
 }
@@ -1091,45 +1033,23 @@ function loadUserProgress(uid) {
   var db = window._fb.db, ref = window._fb.ref, onValue = window._fb.onValue;
   onValue(ref(db, 'users/' + uid + '/progress'), function(snap) {
     var data = snap.val() || {};
-
     modulesVisited = {};
     var mods = data.modules || [];
     for (var i = 0; i < mods.length; i++) modulesVisited[mods[i]] = true;
-
     quizSetsCompleted = {};
     var sets = data.quizSets || [];
     for (var j = 0; j < sets.length; j++) quizSetsCompleted[sets[j]] = true;
-
-    // Restore quiz scores
-    if (data.s1 !== undefined && data.s1 >= 0) setScores.s1 = data.s1;
-    if (data.s2 !== undefined && data.s2 >= 0) setScores.s2 = data.s2;
-    if (data.s3 !== undefined && data.s3 >= 0) setScores.s3 = data.s3;
-
-    // Restore game/forum flags
-    window._gameCompleted = data.gameCompleted === 1;
-    window._forumPosted   = data.forumPosted === 1;
-
     renderProgress();
-    applyProfileData(
-      window._currentUserName || 'Student',
-      window._currentUserEmail || ''
-    );
   });
 }
 
 function saveProgress() {
   if (!window._firebaseReady || !window._currentUser) return;
   var uid = window._currentUser.uid;
-  var data = {
+  window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/progress'), {
     modules: Object.keys(modulesVisited),
-    quizSets: Object.keys(quizSetsCompleted),
-    s1: setScores.s1 !== undefined ? setScores.s1 : -1,
-    s2: setScores.s2 !== undefined ? setScores.s2 : -1,
-    s3: setScores.s3 !== undefined ? setScores.s3 : -1,
-    gameCompleted: window._gameCompleted ? 1 : 0,
-    forumPosted: window._forumPosted ? 1 : 0
-  };
-  window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/progress'), data);
+    quizSets: Object.keys(quizSetsCompleted)
+  });
 }
 
 function renderProgress() {
@@ -1195,11 +1115,19 @@ function switchDND(id, btn) {
 }
 
 function initDND() {
+  // Shuffle both banks on first load
+  var soapBank = document.getElementById('bank-soap');
+  var rubBank  = document.getElementById('bank-rub');
+  if (soapBank) shuffleBank(soapBank);
+  if (rubBank)  shuffleBank(rubBank);
+
   var labels = document.querySelectorAll('.drag-label');
   for (var i = 0; i < labels.length; i++) {
     (function(el) {
-      el.addEventListener('dragstart', function() { dragEl = el; el.style.opacity = '0.45'; });
-      el.addEventListener('dragend', function() { if (dragEl) dragEl.style.opacity = '1'; dragEl = null; });
+      el._onDragStart = function() { dragEl = el; el.style.opacity = '0.45'; };
+      el._onDragEnd   = function() { if (dragEl) dragEl.style.opacity = '1'; dragEl = null; };
+      el.addEventListener('dragstart', el._onDragStart);
+      el.addEventListener('dragend',   el._onDragEnd);
       el.addEventListener('touchstart', touchStart, { passive: true });
       el.addEventListener('touchend', touchEnd);
     })(labels[i]);
@@ -1273,10 +1201,25 @@ function checkDND(game) {
   if (filled < total) { fb.textContent = 'Please fill all ' + total + ' slots before checking.'; return; }
   if (correct === total) {
     fb.textContent = 'Perfect! All ' + total + ' steps matched correctly!';
-    window._gameCompleted = true; saveProgress(); renderProgress(); showToast('Game Master badge earned!', 'success');
+    window._gameCompleted = true; saveProgress(); renderProgress();
   } else {
     fb.textContent = correct + '/' + total + ' correct. Red slots need fixing.';
   }
+}
+
+function shuffleBank(bank) {
+  var labels = Array.prototype.slice.call(bank.querySelectorAll('.drag-label'));
+  // Fisher-Yates shuffle
+  for (var i = labels.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    bank.appendChild(labels[j]);
+    labels.splice(j, 1);
+    labels.splice(i > j ? i - 1 : i, 0, labels[i > j ? i - 1 : i]);
+  }
+  // Simpler: just randomise order by appending in random order
+  var all = Array.prototype.slice.call(bank.querySelectorAll('.drag-label'));
+  all.sort(function() { return Math.random() - 0.5; });
+  all.forEach(function(el) { bank.appendChild(el); });
 }
 
 function resetDND(game) {
@@ -1291,9 +1234,26 @@ function resetDND(game) {
     slot.textContent = 'Drop here'; slot.classList.remove('filled');
   }
   var labels = bank.querySelectorAll('.drag-label');
-  for (var j = 0; j < labels.length; j++) { labels[j].classList.remove('placed'); labels[j].style.opacity = '1'; }
+  for (var j = 0; j < labels.length; j++) {
+    labels[j].classList.remove('placed');
+    labels[j].style.opacity = '1';
+  }
   var fb = document.getElementById('fb-' + game);
   if (fb) fb.textContent = '';
+  // Shuffle labels into new random order on every reset
+  shuffleBank(bank);
+  // Re-bind drag events after shuffle
+  var newLabels = bank.querySelectorAll('.drag-label');
+  for (var k = 0; k < newLabels.length; k++) {
+    (function(el) {
+      el.removeEventListener('dragstart', el._onDragStart || function(){});
+      el.removeEventListener('dragend',   el._onDragEnd   || function(){});
+      el._onDragStart = function() { dragEl = el; el.style.opacity = '0.45'; };
+      el._onDragEnd   = function() { if (dragEl) dragEl.style.opacity = '1'; dragEl = null; };
+      el.addEventListener('dragstart', el._onDragStart);
+      el.addEventListener('dragend',   el._onDragEnd);
+    })(newLabels[k]);
+  }
 }
 
 // ============================================================
@@ -1387,7 +1347,6 @@ function submitSet(setId) {
   if (subBtn) subBtn.style.display = 'none';
   sc.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-  showToast('Set ' + setId.replace('s','') + ' submitted! Score: ' + score + '/5', score === 5 ? 'success' : 'info');
   if (setId === 's3') {
     var total = (setScores.s1 || 0) + (setScores.s2 || 0) + (setScores.s3 || 0);
     var fd = document.getElementById('final-score-display');
@@ -1463,11 +1422,10 @@ function loadLeaderboard() {
     var html = '';
     for (var i = 0; i < entries.length; i++) {
       var e = entries[i];
-      var rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
-      var isMe = window._currentUserName && e.name === window._currentUserName;
-      var rowStyle = isMe ? ' style="background:linear-gradient(90deg,#f0fdfa,#e0f2fe);border:1.5px solid var(--teal)"' : '';
-      html += '<div class="lb-row"' + rowStyle + '><div class="lb-rank">' + rankLabel + '</div>';
-      html += '<div class="lb-name">' + (e.name || 'Anonymous') + (isMe ? ' <span style="font-size:.7rem;color:var(--teal);font-weight:700">(You)</span>' : '') + '</div>';
+      var medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      var rankLabel = i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : (i + 1) + 'th';
+      html += '<div class="lb-row"><div class="lb-rank">' + rankLabel + '</div>';
+      html += '<div class="lb-name">' + (e.name || 'Anonymous') + '</div>';
       html += '<div><div class="lb-score">' + e.total + '/15</div>';
       html += '<div class="lb-set">' + Math.round(e.total / 15 * 100) + '%</div></div></div>';
     }
@@ -1524,26 +1482,29 @@ function postComment() {
   if (!text) return;
   if (!window._currentUser) { openAuth(); return; }
   if (!window._firebaseReady) {
-    showToast('Unable to connect. Check your internet.', 'error'); return;
-    return;
+    showToast('Not connected to Firebase. Check your internet.', 'error'); return;
   }
-  // Use cached name — no async DB read needed
+  // Use cached name synchronously — no async DB read
   var name = window._currentUserName
-    || window._currentUser.displayName
+    || (window._currentUser.displayName)
     || (window._currentUser.email ? window._currentUser.email.split('@')[0] : 'Student');
-  var db = window._fb.db, ref = window._fb.ref, push = window._fb.push;
-  var postBtn = document.querySelector('#comment-box-area button');
+  var postBtn = document.querySelector('#comment-box-area .post-btn');
   if (postBtn) { postBtn.disabled = true; postBtn.textContent = 'Posting...'; }
+  var db = window._fb.db, ref = window._fb.ref, push = window._fb.push;
   push(ref(db, 'forum'), { author: name, text: text, timestamp: Date.now(), likes: 0 })
     .then(function() {
       inp.value = '';
+      var cc = document.getElementById('char-count');
+      if (cc) cc.textContent = '0/500';
       window._forumPosted = true;
       saveProgress(); renderProgress();
-      if (postBtn) { postBtn.disabled = false; postBtn.textContent = 'Post Comment'; }
+      if (postBtn) { postBtn.disabled = false; postBtn.textContent = 'Post'; }
+      showToast('Comment posted!', 'success');
     })
     .catch(function(e) {
-      if (postBtn) { postBtn.disabled = false; postBtn.textContent = 'Post Comment'; }
-      showToast('Could not post. Check Firebase rules.', 'error');
+      if (postBtn) { postBtn.disabled = false; postBtn.textContent = 'Post'; }
+      showToast('Post failed — check Firebase rules are in test mode.', 'error');
+      console.error('postComment error:', e);
     });
 }
 
@@ -1551,14 +1512,20 @@ function postComment() {
 // FULLSCREEN INFOGRAPHIC
 // ============================================================
 function openFS(src, emoji) {
-  var ov = document.getElementById('fs-overlay');
+  var ov  = document.getElementById('fs-overlay');
   var img = document.getElementById('fs-img');
-  var em = document.getElementById('fs-emoji');
+  var em  = document.getElementById('fs-emoji');
+  var dl  = document.getElementById('fs-download-btn');
   if (src && src !== 'undefined' && src !== '') {
     img.src = src; img.style.display = ''; em.style.display = 'none';
+    if (dl) { dl.href = src; dl.download = src.split('/').pop(); dl.style.display = ''; }
   } else {
     img.style.display = 'none'; em.textContent = emoji || '?'; em.style.display = '';
+    if (dl) dl.style.display = 'none';
   }
+  // Reset zoom
+  img.style.transform = 'scale(1)';
+  window._fsScale = 1;
   ov.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1599,23 +1566,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
-
-// Override SP to track module page visits and mark soap as visited
-// when the Modules page is opened (since soap is the default tab)
-var _origSP = SP;
-SP = function(id) {
-  _origSP(id);
-  if (id === 'modules') {
-    // soap is the default active tab — count it immediately
-    if (!modulesVisited['soap']) {
-      modulesVisited['soap'] = true;
-      saveProgress();
-      renderProgress();
-    }
-  }
-};
 </script>
 
+<div class="toast-container" id="toast-container"></div>
+<button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
 <script>
 // ============================================================
 // TOAST NOTIFICATIONS
@@ -1634,6 +1588,24 @@ function showToast(msg, type, duration) {
     setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
   }, duration);
 }
+
+// Fullscreen viewer: click backdrop to close, scroll to zoom
+document.addEventListener('DOMContentLoaded', function() {
+  var ov = document.getElementById('fs-overlay');
+  if (!ov) return;
+  ov.addEventListener('click', function(e) {
+    if (e.target === ov) closeFS();
+  });
+  ov.addEventListener('wheel', function(e) {
+    var img = document.getElementById('fs-img');
+    if (!img || img.style.display === 'none') return;
+    e.preventDefault();
+    window._fsScale = window._fsScale || 1;
+    window._fsScale += e.deltaY < 0 ? 0.15 : -0.15;
+    window._fsScale = Math.max(0.5, Math.min(4, window._fsScale));
+    img.style.transform = 'scale(' + window._fsScale + ')';
+  }, { passive: false });
+});
 
 // Scroll to top button
 window.addEventListener('scroll', function() {
