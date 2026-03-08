@@ -772,16 +772,35 @@ footer strong{color:var(--teal-light)}
       <div class="prog-track"><div class="prog-fill" id="prog-quiz" style="width:0%"></div></div>
     </div>
 
-    <!-- Forum posts list -->
-    <div id="forum-posts-list"></div>
-
-    <div class="comment-box" id="comment-box-area">
-      <h3>💬 Share Your Thoughts</h3>
-      <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, or add a tip… (Enter to post, Shift+Enter for new line)"></textarea>
+    <!-- Post Creation Area -->
+    <div id="post-creation-area" style="display:none;background:linear-gradient(135deg,#f0fdfa 0%,#e0f2fe 100%);border:1.5px solid #99f6e4;border-radius:16px;padding:clamp(1.5rem,4vw,2.5rem);margin-bottom:2rem">
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--ink);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem">💬 Share Your Thoughts & Feedback</h3>
+      <div style="background:#fff;border-radius:12px;padding:1.2rem;border:1.5px solid #bae6fd">
+        <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, offer tips, or provide feedback to peers… (Shift+Enter for new line)" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:1rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;resize:vertical;min-height:100px;background:var(--cream);color:var(--ink);transition:border-color .2s" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.8rem;flex-wrap:wrap;gap:.5rem">
+          <span id="char-count" style="font-size:.74rem;color:var(--muted);font-weight:500">0/500 characters</span>
+          <button onclick="postComment()" style="background:var(--teal);color:#fff;border:none;padding:.7rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;min-height:44px" onmouseover="this.style.background='var(--teal-dark)'" onmouseout="this.style.background='var(--teal)'">Post Comment</button>
+        </div>
+      </div>
     </div>
-    <div id="guest-comment-wall" style="display:none;background:var(--sky);border:1px solid #bae6fd;border-radius:12px;padding:1.2rem;text-align:center;margin-top:1.5rem">
-      <p style="color:var(--teal-dark);font-size:.9rem;margin-bottom:.75rem">Sign in to read and post in the discussion forum.</p>
-      <button onclick="showAuthPage('login')" style="background:var(--teal);color:#fff;border:none;padding:.65rem 1.5rem;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Sign In / Register</button>
+    <div id="guest-comment-wall" style="background:var(--sky);border:1.5px solid #bae6fd;border-radius:14px;padding:1.4rem 1.6rem;text-align:center;margin-bottom:2rem">
+      <p style="color:var(--teal-dark);font-size:.9rem;margin-bottom:.75rem;font-weight:500">🔒 Sign in to read and post in the discussion forum.</p>
+      <button onclick="showAuthPage('login')" style="background:var(--teal);color:#fff;border:none;padding:.7rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;min-height:44px" onmouseover="this.style.background='var(--teal-dark)'" onmouseout="this.style.background='var(--teal)'">Sign In / Register</button>
+    </div>
+
+    <!-- Forum Filter/Sort -->
+    <div style="display:flex;gap:.6rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
+      <span style="font-size:.85rem;font-weight:600;color:var(--ink)">Filter:</span>
+      <button class="forum-filter-btn active" onclick="filterForum('all',this)" style="padding:.5rem 1rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--ink);transition:all .2s;min-height:40px" data-filter="all">All Posts</button>
+      <button class="forum-filter-btn" onclick="filterForum('recent',this)" style="padding:.5rem 1rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--ink);transition:all .2s;min-height:40px" data-filter="recent">Most Recent</button>
+      <button class="forum-filter-btn" onclick="filterForum('popular',this)" style="padding:.5rem 1rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--ink);transition:all .2s;min-height:40px" data-filter="popular">Most Discussed</button>
+    </div>
+
+    <!-- Forum posts list -->
+    <div id="forum-posts-list" style="display:flex;flex-direction:column;gap:1.1rem"></div>
+    <div id="forum-empty-state" style="text-align:center;padding:3rem 1rem;color:var(--muted)">
+      <div style="font-size:3rem;margin-bottom:.5rem">💭</div>
+      <p style="font-size:.95rem;font-weight:500">No posts yet. Be the first to start the discussion!</p>
     </div>
   </div>
 </div>
@@ -1158,7 +1177,7 @@ function updateAuthUI(user){
       var gp=document.getElementById('forum-guest-prompt'); if(gp)gp.style.display='none';
       var ub=document.getElementById('forum-user-bar');     if(ub)ub.classList.add('show');
       var fn=document.getElementById('forum-user-name');    if(fn)fn.textContent=name;
-      var cb=document.getElementById('comment-box-area');   if(cb)cb.style.display='';
+      var pca=document.getElementById('post-creation-area'); if(pca)pca.style.display='';
       var gw=document.getElementById('guest-comment-wall'); if(gw)gw.style.display='none';
       /* Profile */
       var pg =document.getElementById('profile-guest');      if(pg) pg.style.display='none';
@@ -1173,7 +1192,7 @@ function updateAuthUI(user){
       if(chip)chip.classList.remove('show');
       var gp2=document.getElementById('forum-guest-prompt'); if(gp2)gp2.style.display='';
       var ub2=document.getElementById('forum-user-bar');     if(ub2)ub2.classList.remove('show');
-      var cb2=document.getElementById('comment-box-area');   if(cb2)cb2.style.display='none';
+      var pca2=document.getElementById('post-creation-area'); if(pca2)pca2.style.display='none';
       var gw2=document.getElementById('guest-comment-wall'); if(gw2)gw2.style.display='';
       var pg2=document.getElementById('profile-guest');      if(pg2)pg2.style.display='';
       var pc2=document.getElementById('profile-card');       if(pc2)pc2.style.display='none';
@@ -1306,40 +1325,136 @@ function postScore(){if(!window._currentUser){showAuthPage('login');return;}var 
 function loadLeaderboard(){if(!window._firebaseReady)return;var q=window._fb.query(window._fb.ref(window._fb.db,'scores'),window._fb.orderByChild('total'));window._fb.onValue(q,function(snap){var data=snap.val(),list=document.getElementById('lb-list');if(!list)return;if(!data){list.innerHTML='<div class="lb-empty">No scores yet -- be the first!</div>';return;}var rows=Object.values(data).sort(function(a,b){return b.total-a.total;}).slice(0,20);var h='';rows.forEach(function(e,i){var rank=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':(i+1);var isMe=window._currentUserName&&e.name===window._currentUserName;var sty=isMe?' style="background:linear-gradient(90deg,#f0fdfa,#e0f2fe);border:1.5px solid var(--teal)"':'';h+='<div class="lb-row"'+sty+'><div class="lb-rank">'+rank+'</div><div class="lb-name">'+e.name+(isMe?' <span style="font-size:.7rem;color:var(--teal);font-weight:700">(You)</span>':'')+' </div><div><div class="lb-score">'+e.total+'/15</div><div class="lb-set">'+Math.round(e.total/15*100)+'%</div></div></div>';});list.innerHTML=h;});}
 
 /* ---- FORUM ---- */
+var forumData={};
 function loadForumPosts(){
-  if(!window._firebaseReady||!window._currentUser)return;
+  if(!window._firebaseReady)return;
   var q=window._fb.query(window._fb.ref(window._fb.db,'forum'),window._fb.orderByChild('timestamp'));
   window._fb.onValue(q,function(snap){
-    var data=snap.val(),list=document.getElementById('forum-posts-list');
-    if(!list)return;
-    if(!data){
-      list.innerHTML='<p style="color:var(--muted);font-size:.88rem;padding:1rem 0">No posts yet -- be the first!</p>';
-      return;
+    var data=snap.val();
+    forumData={};
+    if(data){Object.keys(data).forEach(function(k){forumData[k]=data[k];});}
+    renderForumPosts('all');
+  });
+}
+function renderForumPosts(filter){
+  var list=document.getElementById('forum-posts-list');
+  var empty=document.getElementById('forum-empty-state');
+  if(!list)return;
+  var pairs=Object.entries(forumData).sort(function(a,b){return b[1].timestamp-a[1].timestamp;});
+  if(filter==='popular'){pairs.sort(function(a,b){return(b[1].likes||0)-(a[1].likes||0);});}
+  var colors=['#0d9488','#f59e0b','#8b5cf6','#ef4444','#3b82f6','#ec4899','#10b981','#06b6d4'];
+  if(pairs.length===0){list.innerHTML='';if(empty)empty.style.display='';return;}
+  if(empty)empty.style.display='none';
+  list.innerHTML='';
+  pairs.forEach(function(pair,i){
+    var key=pair[0], p=pair[1], color=colors[i%colors.length];
+    var init=(p.author||'?')[0].toUpperCase();
+    var d=new Date(p.timestamp);
+    var now=new Date();
+    var diffMs=now-d;
+    var diffMins=Math.floor(diffMs/60000);
+    var diffHours=Math.floor(diffMs/3600000);
+    var diffDays=Math.floor(diffMs/86400000);
+    var timeStr=diffMins<1?'now':diffMins<60?diffMins+'m ago':diffHours<24?diffHours+'h ago':diffDays<7?diffDays+'d ago':d.toLocaleDateString('en-PH',{month:'short',day:'numeric'});
+    var safe=(p.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var lines=safe.split('\n');safe=lines.join('<br>');
+    var replyCount=p.replies?Object.keys(p.replies).length:0;
+    var html='<div class="forum-post-card" data-key="'+key+'" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:1.4rem;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)">';
+    html+='<div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1rem">';
+    html+='<div class="avatar" style="width:42px;height:42px;min-width:42px;border-radius:50%;background:'+color+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem">'+init+'</div>';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.5rem">';
+    html+='<div><div class="poster-name" style="font-weight:700;font-size:.95rem;color:var(--ink)">'+(p.author||'Student')+'</div><div class="poster-time" style="font-size:.78rem;color:var(--muted);margin-top:.2rem">'+timeStr+'</div></div>';
+    html+='</div>';
+    html+='<div class="forum-text" style="font-size:.9rem;line-height:1.65;color:#334155;word-wrap:break-word">'+safe+'</div>';
+    html+='</div></div>';
+    html+='<div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1rem;padding-top:1rem;border-top:1px solid #e2e8f0">';
+    html+='<button class="forum-action-btn" onclick="likePost(\''+key+'\')" style="background:none;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:.3rem;transition:all .2s;min-height:36px;border:1px solid transparent" onmouseover="this.style.background=\'#e0f2fe\';this.style.color=\'var(--teal)\'" onmouseout="this.style.background=\'none\';this.style.color=\'var(--muted)\'">👍 <span>'+(p.likes||0)+'</span></button>';
+    html+='<button class="forum-reply-btn" onclick="toggleReplyForm(\''+key+'\')" style="background:none;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:.3rem;transition:all .2s;min-height:36px;border:1px solid transparent" onmouseover="this.style.background=\'#e0f2fe\';this.style.color=\'var(--teal)\'" onmouseout="this.style.background=\'none\';this.style.color=\'var(--muted)\'">💬 <span>'+replyCount+'</span></button>';
+    html+='</div>';
+    html+='<div id="reply-form-'+key+'" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid #e2e8f0">';
+    if(window._currentUser){
+      html+='<div style="background:var(--cream);border:1.5px solid #e2e8f0;border-radius:10px;padding:1rem">';
+      html+='<textarea class="reply-input" data-key="'+key+'" placeholder="Share your feedback or reply…" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:.8rem;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:.85rem;resize:vertical;min-height:80px;background:#fff;color:var(--ink);transition:border-color .2s" onfocus="this.style.borderColor=\'var(--teal)\'" onblur="this.style.borderColor=\'#e2e8f0\'"></textarea>';
+      html+='<div style="display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap">';
+      html+='<button onclick="postReply(\''+key+'\')" style="background:var(--teal);color:#fff;border:none;padding:.5rem 1.2rem;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:\'Plus Jakarta Sans\',sans-serif;transition:all .2s;min-height:40px">Send Reply</button>';
+      html+='<button onclick="toggleReplyForm(\''+key+'\')" style="background:none;border:1px solid #e2e8f0;padding:.5rem 1.2rem;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted);font-family:\'Plus Jakarta Sans\',sans-serif;transition:all .2s;min-height:40px">Cancel</button>';
+      html+='</div></div>';
+    }else{
+      html+='<p style="color:var(--muted);font-size:.85rem;text-align:center">Sign in to reply to this post</p>';
     }
-    var pairs=Object.entries(data).sort(function(a,b){return b[1].timestamp-a[1].timestamp;}).slice(0,30);
-    var colors=['#0d9488','#f59e0b','#8b5cf6','#ef4444','#3b82f6','#ec4899'];
-    var h='';
-    pairs.forEach(function(pair,i){
-      var key=pair[0], p=pair[1], color=colors[i%colors.length];
-      var init=(p.author||'?')[0].toUpperCase();
-      var d=new Date(p.timestamp);
-      var date=d.toLocaleDateString('en-PH',{month:'short',day:'numeric'})+' '+d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
-      var safe=(p.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      var lines=safe.split('\n');safe=lines.join('<br>');
-      h+='<div class="forum-post">';
-      h+='<div class="forum-meta"><div class="avatar" style="background:'+color+'">'+init+'</div>';
-      h+='<div><div class="poster-name">'+(p.author||'Student')+'</div><div class="poster-time">'+date+'</div></div></div>';
-      h+='<div class="forum-text">'+safe+'</div>';
-      h+='<div class="forum-actions"><button class="forum-btn" onclick="likePost(\''+key+'\')">'+(p.likes||0)+' Likes</button></div>';
-      h+='</div>';
-    });
-    list.innerHTML=h;
+    html+='</div>';
+    /* Display replies */
+    if(replyCount>0){
+      html+='<div id="replies-container-'+key+'" style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f1f5f9;display:flex;flex-direction:column;gap:.8rem">';
+      Object.keys(p.replies||{}).forEach(function(rkey){
+        var r=p.replies[rkey];
+        var rinit=(r.author||'?')[0].toUpperCase();
+        var rd=new Date(r.timestamp);
+        var rdiffMs=now-rd;
+        var rdiffMins=Math.floor(rdiffMs/60000);
+        var rdiffHours=Math.floor(rdiffMs/3600000);
+        var rtimeStr=rdiffMins<1?'now':rdiffMins<60?rdiffMins+'m ago':rdiffHours<24?rdiffHours+'h ago':rd.toLocaleDateString();
+        var rsafe=(r.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split('\n').join('<br>');
+        var rcolor=colors[(Object.keys(p.replies).indexOf(rkey)+1)%colors.length];
+        html+='<div style="background:#f8fafc;border-left:3px solid '+rcolor+';border-radius:6px;padding:.9rem;margin-left:0">';
+        html+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">';
+        html+='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+rcolor+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem">'+rinit+'</div>';
+        html+='<div>';
+        html+='<div style="font-weight:600;font-size:.82rem;color:var(--ink)">'+(r.author||'Student')+'</div>';
+        html+='<div style="font-size:.72rem;color:var(--muted)">'+rtimeStr+'</div>';
+        html+='</div></div>';
+        html+='<div style="font-size:.85rem;line-height:1.55;color:#334155;word-wrap:break-word">'+rsafe+'</div>';
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+    list.innerHTML+=html;
+  });
+}
+function filterForum(type,btn){
+  document.querySelectorAll('.forum-filter-btn').forEach(function(b){
+    b.style.background='#fff';b.style.color='var(--ink)';b.style.borderColor='#e2e8f0';
+  });
+  if(btn){btn.style.background='var(--teal)';btn.style.color='#fff';btn.style.borderColor='var(--teal)';}
+  renderForumPosts(type);
+}
+function toggleReplyForm(key){
+  var form=document.getElementById('reply-form-'+key);
+  if(form)form.style.display=form.style.display==='none'?'block':'none';
+}
+function postReply(key){
+  if(!window._currentUser){showAuthPage('login');return;}
+  var input=document.querySelector('.reply-input[data-key="'+key+'"]');
+  if(!input)return;
+  var text=input.value.trim();
+  if(!text){showToast('Type a reply first.','info');return;}
+  if(!window._firebaseReady){showToast('Not connected.','error');return;}
+  var name=window._currentUserName||(window._currentUser.displayName)||(window._currentUser.email||'').split('@')[0]||'Student';
+  input.disabled=true;
+  window._fb.set(window._fb.ref(window._fb.db,'forum/'+key+'/replies/'+Date.now()),{
+    author:name, text:text, timestamp:Date.now()
+  }).then(function(){
+    input.value='';input.disabled=false;
+    window._forumPosted=true;
+    saveProgress();
+    renderProgress();
+    setTimeout(loadForumPosts,300);
+    showToast('Reply posted!','success');
+    toggleReplyForm(key);
+  }).catch(function(err){
+    input.disabled=false;
+    showToast('Reply failed. Check Firebase rules.','error');
+    console.error('postReply:',err);
   });
 }
 function likePost(key){
   if(!window._firebaseReady||!window._currentUser)return;
   window._fb.get(window._fb.ref(window._fb.db,'forum/'+key+'/likes')).then(function(snap){
-    window._fb.set(window._fb.ref(window._fb.db,'forum/'+key+'/likes'),(snap.exists()?snap.val():0)+1);
+    window._fb.set(window._fb.ref(window._fb.db,'forum/'+key+'/likes'),(snap.exists()?snap.val():0)+1).then(function(){
+      setTimeout(loadForumPosts,200);
+    });
   });
 }
 /* POST COMMENT -- uses synchronously cached name, never hangs */
@@ -1349,12 +1464,13 @@ function postComment(){
   if(!text){showToast('Type something first.','info');return;}
   if(!window._currentUser){showAuthPage('login');return;}
   if(!window._firebaseReady){showToast('Not connected.','error');return;}
+  if(text.length>500){showToast('Post too long (max 500 characters).','error');return;}
   /* Synchronous name -- no async DB call that can stall */
   var name=window._currentUserName
            ||(window._currentUser.displayName)
            ||(window._currentUser.email||'').split('@')[0]
            ||'Student';
-  var postBtn=document.querySelector('#comment-box-area .post-btn');
+  var postBtn=document.querySelector('#post-creation-area button[onclick="postComment()"]');
   if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';}
   
   // Use Promise.race with 8 second timeout
@@ -1364,20 +1480,20 @@ function postComment(){
   
   Promise.race([
     window._fb.push(window._fb.ref(window._fb.db,'forum'),{
-      author:name, text:text, timestamp:Date.now(), likes:0
+      author:name, text:text, timestamp:Date.now(), likes:0, replies:{}
     }),
     timeout
   ]).then(function(){
     inp.value='';
-    var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500';
+    var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500 characters';
     window._forumPosted=true;
     saveProgress();
     renderProgress();
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';}
-    showToast('Comment posted!','success');
-    setTimeout(loadForumPosts,500);
+    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';}
+    showToast('Comment posted! Check the feed below.','success');
+    setTimeout(loadForumPosts,400);
   }).catch(function(err){
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';}
+    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';}
     var errMsg='Post failed.';
     if(err.message==='Push timeout'){errMsg='Post timeout - check your Firebase rules or internet connection.';}
     showToast(errMsg,'error');
@@ -1393,33 +1509,30 @@ function closeFS(){var ov=document.getElementById('fs-overlay');if(ov)ov.classLi
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFS();});
 document.addEventListener('DOMContentLoaded',function(){
   initDND();
-  var cb=document.getElementById('comment-box-area');
-  var gw=document.getElementById('guest-comment-wall');
-  if(cb)cb.style.display='none';
-  if(gw)gw.style.display='';
   renderProgress();
-  /* Build post bar with char counter + Post button */
-  var cbox=document.getElementById('comment-box-area');
-  if(cbox&&!cbox.querySelector('.post-btn')){
-    var ci=document.getElementById('comment-input');
-    if(ci){
-      var row=document.createElement('div');
-      row.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-top:.5rem';
-      var cc=document.createElement('span');
-      cc.id='char-count';cc.style.cssText='font-size:.74rem;color:var(--muted)';cc.textContent='0/500';
-      var pb=document.createElement('button');
-      pb.className='post-btn';pb.textContent='Post';pb.style.cssText='width:auto;padding:.65rem 1.6rem';
-      pb.onclick=postComment;
-      ci.addEventListener('input',function(){cc.textContent=ci.value.length+'/500';});
-      ci.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();postComment();}});
-      row.appendChild(cc);row.appendChild(pb);cbox.appendChild(row);
-    }
+  
+  /* Setup forum post creation area */
+  var ci=document.getElementById('comment-input');
+  if(ci){
+    ci.addEventListener('input',function(){
+      var cc=document.getElementById('char-count');
+      if(cc)cc.textContent=ci.value.length+'/500 characters';
+    });
+    ci.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&!e.shiftKey){
+        e.preventDefault();
+        postComment();
+      }
+    });
   }
+  
   window.addEventListener('scroll',function(){
     var btn=document.getElementById('scroll-top-btn');
     if(btn)btn.classList.toggle('visible',window.scrollY>400);
   });
+  
   setTimeout(loadLeaderboard,1400);
+  setTimeout(function(){if(window._firebaseReady)loadForumPosts();},800);
 });
 </script>
 </body>
