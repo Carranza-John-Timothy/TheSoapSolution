@@ -1616,6 +1616,7 @@ SP = function(id) {
 };
 </script>
 
+<script>
 // ============================================================
 // TOAST NOTIFICATIONS
 // ============================================================
@@ -1634,12 +1635,12 @@ function showToast(msg, type, duration) {
   }, duration);
 }
 
-
 // Scroll to top button
 window.addEventListener('scroll', function() {
   var btn = document.getElementById('scroll-top-btn');
   if (btn) btn.classList.toggle('visible', window.scrollY > 400);
 });
+</script>
 
 </body>
 </html>
