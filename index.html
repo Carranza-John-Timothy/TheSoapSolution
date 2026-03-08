@@ -778,7 +778,6 @@ footer strong{color:var(--teal-light)}
     <div class="comment-box" id="comment-box-area">
       <h3>💬 Share Your Thoughts</h3>
       <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, or add a tip… (Enter to post, Shift+Enter for new line)"></textarea>
-      <button onclick="postComment()">Post Comment</button>
     </div>
     <div id="guest-comment-wall" style="display:none;background:var(--sky);border:1px solid #bae6fd;border-radius:12px;padding:1.2rem;text-align:center;margin-top:1.5rem">
       <p style="color:var(--teal-dark);font-size:.9rem;margin-bottom:.75rem">Sign in to read and post in the discussion forum.</p>
@@ -1101,6 +1100,7 @@ function doRegister(){
         _resetBtn('rp-btn','Create Account');
         updateAuthUI(null);
         // Go to login with success message
+        showToast('Account created successfully! Please sign in.','success');
         showAuthPage('login');
         _showBanner('lp-banner','Account created! Sign in with your new credentials.','success');
       });
@@ -1361,6 +1361,7 @@ function postComment(){
     window._forumPosted=true;
     saveProgress();
     renderProgress();
+    loadForumPosts();
     if(postBtn){postBtn.disabled=false;postBtn.textContent='Post';}
     showToast('Comment posted!','success');
   }).catch(function(err){
