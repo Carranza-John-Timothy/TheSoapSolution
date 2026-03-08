@@ -804,8 +804,8 @@ footer strong{color:var(--teal-light)}
     <h2>Welcome</h2>
     <p>Sign in or create an account to post in the forum and track your progress.</p>
     <div class="modal-tabs">
-      <button class="modal-tab active" onclick="switchAuth('login',this)">Sign In</button>
-      <button class="modal-tab" onclick="switchAuth('register',this)">Register</button>
+      <button class="modal-tab active" data-tab="login" onclick="switchAuth('login',this)">Sign In</button>
+      <button class="modal-tab" data-tab="register" onclick="switchAuth('register',this)">Register</button>
     </div>
     <div id="auth-login" class="auth-panel active">
       <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com"/></div>
@@ -941,9 +941,13 @@ function doLogin() {
   var email = document.getElementById('login-email').value.trim();
   var pass = document.getElementById('login-pass').value;
   var err = document.getElementById('login-err');
+  err.style.color = ''; // reset to error color
   err.textContent = 'Signing in...';
   window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass)
-    .then(function() { err.textContent = ''; closeAuth(); })
+    .then(function() {
+      err.textContent = '';
+      closeAuth();
+    })
     .catch(function(e) {
       if (e.code === 'auth/user-not-found') err.textContent = 'No account found. Please register.';
       else if (e.code === 'auth/wrong-password') err.textContent = 'Incorrect password.';
@@ -973,13 +977,24 @@ function doRegister() {
       return Promise.all(tasks);
     })
     .then(function() {
-      err.style.color = '#16a34a';
-      err.textContent = 'Account created! You are now signed in.';
-      setTimeout(function() {
-        err.textContent = '';
-        closeAuth();
-        SP('forum');
-      }, 1200);
+      // Immediately sign out so the user explicitly logs in next
+      if (window._fb && window._fb.auth && window._fb.signOut) {
+        window._fb.signOut(window._fb.auth).catch(function(){});
+      }
+      // Prefill login email
+      var loginEmail = document.getElementById('login-email');
+      if (loginEmail) loginEmail.value = email;
+      // Switch to login tab
+      var loginTabBtn = document.querySelector('.modal-tab[data-tab="login"]');
+      if (loginTabBtn) switchAuth('login', loginTabBtn);
+      // Show success message on login panel
+      var loginErr = document.getElementById('login-err');
+      if (loginErr) {
+        loginErr.style.color = '#16a34a';
+        loginErr.textContent = 'Account created! You can now sign in.';
+      }
+      // Clear register message
+      err.textContent = '';
     })
     .catch(function(e) {
       err.style.color = '';
