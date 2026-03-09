@@ -44,6 +44,14 @@
       onAuthStateChanged(auth, user => {
         if (window._registering) return;
         window._currentUser = user || null;
+        // Cache name sync from token so postComment never waits on a DB read
+        if (user) {
+          if (!window._currentUserName) {
+            window._currentUserName = user.displayName || (user.email||'').split('@')[0] || 'Student';
+          }
+        } else {
+          window._currentUserName = null;
+        }
         if (typeof updateAuthUI    === 'function') updateAuthUI(user);
         if (user && typeof loadUserProgress === 'function') loadUserProgress(user.uid);
       });
@@ -779,7 +787,7 @@ footer strong{color:var(--teal-light)}
         <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, offer tips, or provide feedback to peers… (Shift+Enter for new line)" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:1rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;resize:vertical;min-height:100px;background:var(--cream);color:var(--ink);transition:border-color .2s" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.8rem;flex-wrap:wrap;gap:.5rem">
           <span id="char-count" style="font-size:.74rem;color:var(--muted);font-weight:500">0/500 characters</span>
-          <span id="post-status-msg" style="font-size:.82rem;font-weight:500;flex:1;text-align:left"></span>
+          <span id="post-status-msg" style="font-size:.82rem;font-weight:500;color:#0d9488;flex:1"></span>
           <button id="post-comment-btn" onclick="postComment()" style="background:var(--teal);color:#fff;border:none;padding:.7rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;min-height:44px" onmouseover="if(!this.disabled)this.style.background='var(--teal-dark)'" onmouseout="if(!this.disabled)this.style.background='var(--teal)'">Post Comment</button>
         </div>
       </div>
@@ -1053,21 +1061,31 @@ function doLogin(){
   window._fb.signInWithEmailAndPassword(window._fb.auth,email,pass)
     .then(function(cred){
       var user=cred.user;
-      return getUserDisplayName(user.uid).then(function(name){
-        window._currentUser=user;
-        window._currentUserName=name;
-        window._currentUserEmail=email;
-        updateAuthUI(user);
-        loadUserProgress(user.uid);
-        // Reset form and button BEFORE navigating
-        _resetBtn('lp-btn','Sign In');
-        _clearBanner('lp-banner');
-        emailEl.value='';
-        passEl.value='';
-        // Navigate to home
-        SP('home');
-        showToast('Welcome back, '+name+'!','success');
-      });
+      // Set state immediately from auth token — no DB read blocking navigation
+      window._currentUser      = user;
+      window._currentUserEmail = email;
+      window._currentUserName  = user.displayName || email.split('@')[0] || 'Student';
+      // Reset UI and navigate to HOME right now
+      _resetBtn('lp-btn','Sign In');
+      _clearBanner('lp-banner');
+      emailEl.value='';
+      passEl.value='';
+      updateAuthUI(user);
+      loadUserProgress(user.uid);
+      SP('home');
+      showToast('Welcome back, '+window._currentUserName+'!','success');
+      // Refine name from DB silently in background
+      getUserDisplayName(user.uid).then(function(dbName){
+        if(dbName && dbName!=='Student'){
+          window._currentUserName=dbName;
+          var el;
+          el=document.getElementById('user-nm');       if(el)el.textContent=dbName;
+          el=document.getElementById('profile-name');  if(el)el.textContent=dbName;
+          el=document.getElementById('forum-user-name');if(el)el.textContent=dbName;
+          el=document.getElementById('user-av');       if(el)el.textContent=dbName[0].toUpperCase();
+          el=document.getElementById('profile-avatar-big');if(el)el.textContent=dbName[0].toUpperCase();
+        }
+      }).catch(function(){});
     })
     .catch(function(e){
       _resetBtn('lp-btn','Sign In');
@@ -1472,37 +1490,30 @@ function postComment(){
            ||(window._currentUser.email||'').split('@')[0]
            ||'Student';
   var postBtn=document.getElementById('post-comment-btn');
-  if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';postBtn.style.background='#94a3b8';postBtn.style.opacity='.8';}
-  var smClear=document.getElementById('post-status-msg');if(smClear)smClear.textContent='';
-  
-  // Use Promise.race with 8 second timeout
-  var timeout=new Promise(function(resolve,reject){
-    setTimeout(function(){reject(new Error('Push timeout'));},8000);
-  });
-  
-  Promise.race([
-    window._fb.push(window._fb.ref(window._fb.db,'forum'),{
-      author:name, text:text, timestamp:Date.now(), likes:0, replies:{}
-    }),
-    timeout
-  ]).then(function(){
+  var sm=document.getElementById('post-status-msg');
+  if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';postBtn.style.opacity='.7';}
+  if(sm){sm.textContent='';sm.style.color='#0d9488';}
+
+  window._fb.push(window._fb.ref(window._fb.db,'forum'),{
+    author:name, text:text, timestamp:Date.now(), likes:0, replies:{}
+  }).then(function(){
     inp.value='';
     var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500 characters';
     window._forumPosted=true;
     saveProgress();
     renderProgress();
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';postBtn.style.background='';}
-    var sm=document.getElementById('post-status-msg');
+    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';postBtn.style.opacity='1';}
     if(sm){sm.textContent='Posted!';sm.style.color='#0d9488';setTimeout(function(){sm.textContent='';},3000);}
     showToast('Comment posted!','success');
     setTimeout(loadForumPosts,400);
   }).catch(function(err){
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';postBtn.style.background='';}
-    var errMsg=err&&err.message==='Push timeout'?'Timeout - check internet connection.':'Post failed: '+(err&&err.message?err.message:'unknown error');
-    var sm2=document.getElementById('post-status-msg');
-    if(sm2){sm2.textContent=errMsg;sm2.style.color='#ef4444';}
-    showToast(errMsg,'error');
-    console.error('postComment:',err);
+    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';postBtn.style.opacity='1';}
+    var code=err&&err.code?err.code:'';
+    var msg=err&&err.message?err.message:'unknown error';
+    var display=code?code+' - '+msg:msg;
+    if(sm){sm.textContent='Error: '+display;sm.style.color='#ef4444';}
+    showToast('Post failed. See error beside the Post button.','error');
+    console.error('postComment error:',code,msg);
   });
 }
 
