@@ -44,11 +44,6 @@
       onAuthStateChanged(auth, user => {
         if (window._registering) return;
         window._currentUser = user || null;
-        if (user && !window._currentUserName) {
-          window._currentUserName = user.displayName || (user.email||'').split('@')[0] || 'Student';
-        } else if (!user) {
-          window._currentUserName = null;
-        }
         if (typeof updateAuthUI    === 'function') updateAuthUI(user);
         if (user && typeof loadUserProgress === 'function') loadUserProgress(user.uid);
       });
@@ -416,6 +411,239 @@ footer strong{color:var(--teal-light)}
 .soap-toast.t-error{border-left:3px solid #ef4444}
 .soap-toast.t-info{border-left:3px solid #0d9488}
 
+
+/* ═══════════════════════════════════════
+   SCROLL REVEAL ANIMATIONS
+   Respects prefers-reduced-motion
+═══════════════════════════════════════ */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Base reveal state — elements start invisible */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity .65s cubic-bezier(.22,.61,.36,1),
+                transform .65s cubic-bezier(.22,.61,.36,1);
+  }
+  .reveal.reveal-left  { transform: translateX(-36px); }
+  .reveal.reveal-right { transform: translateX(36px); }
+  .reveal.reveal-scale { transform: scale(.92); }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Stagger children inside a container */
+  .stagger-children > * {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .55s cubic-bezier(.22,.61,.36,1),
+                transform .55s cubic-bezier(.22,.61,.36,1);
+  }
+  .stagger-children.visible > *:nth-child(1)  { transition-delay: .05s; }
+  .stagger-children.visible > *:nth-child(2)  { transition-delay: .13s; }
+  .stagger-children.visible > *:nth-child(3)  { transition-delay: .21s; }
+  .stagger-children.visible > *:nth-child(4)  { transition-delay: .29s; }
+  .stagger-children.visible > *:nth-child(5)  { transition-delay: .37s; }
+  .stagger-children.visible > *:nth-child(6)  { transition-delay: .42s; }
+  .stagger-children.visible > *:nth-child(7)  { transition-delay: .47s; }
+  .stagger-children.visible > *:nth-child(8)  { transition-delay: .52s; }
+  .stagger-children.visible > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Hero entrance — each child animates in sequence */
+  .hero-inner > * {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .7s cubic-bezier(.22,.61,.36,1),
+                transform .7s cubic-bezier(.22,.61,.36,1);
+  }
+  .hero-inner.hero-loaded > *:nth-child(1) { transition-delay: .1s;  }
+  .hero-inner.hero-loaded > *:nth-child(2) { transition-delay: .25s; }
+  .hero-inner.hero-loaded > *:nth-child(3) { transition-delay: .42s; }
+  .hero-inner.hero-loaded > *:nth-child(4) { transition-delay: .58s; }
+  .hero-inner.hero-loaded > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Stat bar counter pulse on entry */
+  .stat-bar.visible .stat-num {
+    animation: statPop .5s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .stat-bar.visible .stat:nth-child(1) .stat-num { animation-delay: .05s; }
+  .stat-bar.visible .stat:nth-child(2) .stat-num { animation-delay: .15s; }
+  .stat-bar.visible .stat:nth-child(3) .stat-num { animation-delay: .25s; }
+  .stat-bar.visible .stat:nth-child(4) .stat-num { animation-delay: .35s; }
+  @keyframes statPop {
+    from { opacity: 0; transform: scale(.7) translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* Floating orbs in hero background */
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(20,184,166,.18) 0%, transparent 70%);
+    top: -80px; right: -60px;
+    pointer-events: none;
+    animation: orbFloat 9s ease-in-out infinite;
+  }
+  @keyframes orbFloat {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33%      { transform: translate(-18px, 24px) scale(1.06); }
+    66%      { transform: translate(14px,-16px) scale(.96); }
+  }
+
+  /* Second orb */
+  .hero-inner::before {
+    content: '';
+    position: absolute;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 70%);
+    bottom: -60px; left: -80px;
+    pointer-events: none;
+    animation: orbFloat2 12s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes orbFloat2 {
+    0%,100% { transform: translate(0,0); }
+    50%      { transform: translate(22px,-30px); }
+  }
+
+  /* Page transition — smoother version of existing fadeUp */
+  .page { animation: pageIn .4s cubic-bezier(.22,.61,.36,1) both; }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* Moment card hover lift (more pronounced) */
+  @media (hover: hover) {
+    .moment-card:hover {
+      transform: translateY(-6px) scale(1.015);
+      box-shadow: 0 20px 48px rgba(13,148,136,.15);
+    }
+    .step-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.09);
+    }
+    .res-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 36px rgba(0,0,0,.1);
+    }
+    .moment-card, .step-card, .res-card {
+      transition: transform .25s cubic-bezier(.22,.61,.36,1),
+                  box-shadow .25s cubic-bezier(.22,.61,.36,1);
+    }
+  }
+
+  /* Tag badge pop */
+  .tag {
+    display: inline-block;
+    animation: none; /* set by JS when reveal fires */
+  }
+  .reveal.visible .tag,
+  .tag.tag-animate {
+    animation: tagSlide .45s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes tagSlide {
+    from { opacity: 0; transform: translateX(-14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* Button press haptic */
+  .btn:active { transform: scale(.96); }
+
+  /* Nav link underline slide */
+  .nav-links a::after {
+    content: '';
+    display: block;
+    height: 2px;
+    background: var(--teal);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .22s ease;
+    border-radius: 2px;
+  }
+  .nav-links a:hover::after,
+  .nav-links a.active::after { transform: scaleX(1); }
+
+  /* Bottom nav active indicator */
+  .bottom-nav a.active .bi {
+    transform: translateY(-2px) scale(1.18);
+    transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  /* Section title underline draw */
+  .section-title::after {
+    content: '';
+    display: block;
+    height: 3px;
+    width: 48px;
+    background: var(--teal);
+    border-radius: 2px;
+    margin-top: .4rem;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .5s cubic-bezier(.22,.61,.36,1) .2s;
+  }
+  .reveal.visible .section-title::after,
+  .section-title.title-visible::after {
+    transform: scaleX(1);
+  }
+
+  /* Progress bar animate on scroll into view */
+  .prog-fill, .pbar-fill {
+    transition: width 1.1s cubic-bezier(.22,.61,.36,1) !important;
+  }
+
+  /* Quiz option press */
+  .opt:active { transform: scale(.98); }
+
+  /* Toast slide in */
+  .soap-toast {
+    animation: toastIn .3s cubic-bezier(.34,1.3,.64,1) both;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(40px) scale(.92); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* User chip pop in on login */
+  .user-chip.show {
+    animation: chipIn .4s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes chipIn {
+    from { opacity: 0; transform: scale(.7); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* Badge earned pop */
+  .badge-card.earned {
+    animation: badgeEarn .5s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes badgeEarn {
+    from { transform: scale(.8); opacity: .4; }
+    to   { transform: none;      opacity: 1; }
+  }
+
+} /* end prefers-reduced-motion */
+
+/* Reduced motion fallback — instant, no transform */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .stagger-children > *, .hero-inner > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -451,7 +679,7 @@ footer strong{color:var(--teal-light)}
 ════════════════════════════════ -->
 <div id="home" class="page active">
   <div class="hero">
-    <div class="hero-inner">
+    <div class="hero-inner" id="hero-inner">
       <div class="eyebrow">WHO · CDC · Evidence-Based Education</div>
       <h1>Hand Hygiene<br/>Saves <em>Lives.</em></h1>
       <p>An interactive educational portal for nursing students — master the science of infection prevention through hands-on learning.</p>
@@ -459,7 +687,7 @@ footer strong{color:var(--teal-light)}
         <a href="#" class="btn btn-primary" onclick="SP('modules');return false">▶ Start Learning</a>
         <a href="#" class="btn btn-outline" onclick="SP('game');return false">🎮 Play the Game</a>
       </div>
-      <div class="stat-bar">
+      <div class="stat-bar reveal reveal-scale">
         <div class="stat"><div class="stat-num">80%</div><div class="stat-label">infections preventable</div></div>
         <div class="stat"><div class="stat-num">5</div><div class="stat-label">WHO moments</div></div>
         <div class="stat"><div class="stat-num">20s</div><div class="stat-label">min. wash time</div></div>
@@ -470,9 +698,9 @@ footer strong{color:var(--teal-light)}
 
   <div class="section">
     <div class="tag">Why It Matters</div>
-    <h2 class="section-title">The 5 Moments for Hand Hygiene</h2>
-    <p class="section-sub">Based on the WHO standard — know exactly when to clean your hands in clinical practice.</p>
-    <div class="moments-grid">
+    <h2 class="section-title reveal">The 5 Moments for Hand Hygiene</h2>
+    <p class="section-sub reveal" style="transition-delay:.1s">Based on the WHO standard — know exactly when to clean your hands in clinical practice.</p>
+    <div class="moments-grid stagger-children">
       <div class="moment-card"><div class="moment-num">1</div><h3>Before Patient Contact</h3><p>Prevent transferring germs from the environment to the patient.</p></div>
       <div class="moment-card"><div class="moment-num">2</div><h3>Before Aseptic Task</h3><p>Protect the patient from organisms during invasive procedures.</p></div>
       <div class="moment-card"><div class="moment-num">3</div><h3>After Body Fluid Exposure</h3><p>Protect yourself and the environment from patient germs.</p></div>
@@ -487,7 +715,7 @@ footer strong{color:var(--teal-light)}
 ════════════════════════════════ -->
 <div id="modules" class="page">
   <div class="section">
-    <div class="tag">Learning Modules</div>
+    <div class="tag reveal reveal-left">Learning Modules</div>
     <h2 class="section-title">Hand Hygiene Techniques</h2>
     <p class="section-sub">Watch the demonstration videos then follow the step-by-step guides. Complete each module to unlock its quiz set.</p>
 
@@ -503,7 +731,7 @@ footer strong{color:var(--teal-light)}
         <!-- Replace src with your preferred WHO/CDC handwashing YouTube video -->
         <iframe src="https://www.youtube.com/embed/3PmVJQUCm4E" title="WHO Handwashing Technique with Soap and Water" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
       </div>
-      <div class="steps-grid">
+      <div class="steps-grid stagger-children">
         <div class="step-card"><div class="step-icon">💧</div><div><h4>Step 1 – Wet Hands</h4><p>Wet hands with clean running water (warm or cold) and apply enough soap.</p></div></div>
         <div class="step-card"><div class="step-icon">🤲</div><div><h4>Step 2 – Lather Palms</h4><p>Rub palms together vigorously to build a full lather on all surfaces.</p></div></div>
         <div class="step-card"><div class="step-icon">🔄</div><div><h4>Step 3 – Interlace Fingers</h4><p>Interlace fingers, rub between them and on the back of each hand.</p></div></div>
@@ -551,7 +779,7 @@ footer strong{color:var(--teal-light)}
     <div style="margin-top:3rem">
       <div class="tag">Impact</div>
       <h2 class="section-title" style="font-size:clamp(1.3rem,3.5vw,1.6rem)">What Happens When We Don't Comply?</h2>
-      <div class="steps-grid" style="margin-top:1.1rem">
+      <div class="steps-grid stagger-children" style="margin-top:1.1rem">
         <div class="step-card"><div class="step-icon">🦠</div><div><h4>Healthcare-Associated Infections</h4><p>HAIs affect 1 in 10 hospitalized patients globally — most are preventable.</p></div></div>
         <div class="step-card"><div class="step-icon">📈</div><div><h4>Antibiotic Resistance</h4><p>Spreading resistant organisms creates infections that are harder and costlier to treat.</p></div></div>
         <div class="step-card"><div class="step-icon">💔</div><div><h4>Patient Harm &amp; Mortality</h4><p>Poor hand hygiene remains a leading cause of preventable patient deaths worldwide.</p></div></div>
@@ -566,7 +794,7 @@ footer strong{color:var(--teal-light)}
 ════════════════════════════════ -->
 <div id="game" class="page">
   <div class="section">
-    <div class="tag">Interactive Game</div>
+    <div class="tag reveal reveal-left">Interactive Game</div>
     <h2 class="section-title">Drag & Drop Challenge</h2>
     <p class="section-sub">Drag the correct step label onto each image. Test your knowledge of proper hand hygiene technique!</p>
 
@@ -641,8 +869,8 @@ footer strong{color:var(--teal-light)}
 ════════════════════════════════ -->
 <div id="quiz" class="page">
   <div class="section">
-    <div class="tag">Self-Assessment</div>
-    <h2 class="section-title">Knowledge Check — 15 Questions</h2>
+    <div class="tag reveal reveal-left">Self-Assessment</div>
+    <h2 class="section-title reveal">Knowledge Check — 15 Questions</h2>
     <p class="section-sub">Three sets of 5 questions, one per module. Complete all three and see your total score.</p>
 
     <div class="quiz-sets">
@@ -698,7 +926,7 @@ footer strong{color:var(--teal-light)}
 <div id="resources" class="page">
   <div class="section">
     <div class="tag">Resources</div>
-    <h2 class="section-title">Reference Materials</h2>
+    <h2 class="section-title reveal">Reference Materials</h2>
     <p class="section-sub">Official guidelines, printable posters, and infographics — all based on WHO and CDC evidence.</p>
 
     <div class="resources-grid">
@@ -748,7 +976,7 @@ footer strong{color:var(--teal-light)}
 <div id="forum" class="page">
   <div class="section">
     <div class="tag">Peer Learning</div>
-    <h2 class="section-title">Feedback &amp; Discussion</h2>
+    <h2 class="section-title reveal">Feedback &amp; Discussion</h2>
     <p class="section-sub">Share clinical experiences, ask questions, and learn from fellow nursing students.</p>
 
     <!-- Login prompt for guests -->
@@ -784,8 +1012,7 @@ footer strong{color:var(--teal-light)}
         <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, offer tips, or provide feedback to peers… (Shift+Enter for new line)" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:1rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;resize:vertical;min-height:100px;background:var(--cream);color:var(--ink);transition:border-color .2s" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.8rem;flex-wrap:wrap;gap:.5rem">
           <span id="char-count" style="font-size:.74rem;color:var(--muted);font-weight:500">0/500 characters</span>
-          <span id="post-status-msg" style="font-size:.82rem;font-weight:500;flex:1"></span>
-          <button id="post-comment-btn" onclick="postComment()" style="background:var(--teal);color:#fff;border:none;padding:.7rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;min-height:44px">Post Comment</button>
+          <button onclick="postComment()" style="background:var(--teal);color:#fff;border:none;padding:.7rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;min-height:44px" onmouseover="this.style.background='var(--teal-dark)'" onmouseout="this.style.background='var(--teal)'">Post Comment</button>
         </div>
       </div>
     </div>
@@ -817,7 +1044,7 @@ footer strong{color:var(--teal-light)}
 <div id="profile" class="page">
   <div class="section">
     <div class="tag">Your Account</div>
-    <h2 class="section-title">Profile</h2>
+    <h2 class="section-title reveal">Profile</h2>
     <p class="section-sub">View your account details and learning progress.</p>
 
     <div class="forum-login-prompt" id="profile-guest">
@@ -1058,29 +1285,21 @@ function doLogin(){
   window._fb.signInWithEmailAndPassword(window._fb.auth,email,pass)
     .then(function(cred){
       var user=cred.user;
-      // Set everything immediately — no DB read blocking navigation
-      window._currentUser      = user;
-      window._currentUserEmail = email;
-      window._currentUserName  = user.displayName || email.split('@')[0] || 'Student';
-      _resetBtn('lp-btn','Sign In');
-      _clearBanner('lp-banner');
-      emailEl.value=''; passEl.value='';
-      updateAuthUI(user);
-      loadUserProgress(user.uid);
-      SP('home');
-      showToast('Welcome back, '+window._currentUserName+'!','success');
-      // Refine name from DB silently in background
-      getUserDisplayName(user.uid).then(function(dbName){
-        if(dbName&&dbName!=='Student'){
-          window._currentUserName=dbName;
-          var e2;
-          e2=document.getElementById('user-nm');        if(e2)e2.textContent=dbName;
-          e2=document.getElementById('profile-name');   if(e2)e2.textContent=dbName;
-          e2=document.getElementById('forum-user-name');if(e2)e2.textContent=dbName;
-          e2=document.getElementById('user-av');        if(e2)e2.textContent=dbName[0].toUpperCase();
-          e2=document.getElementById('profile-avatar-big');if(e2)e2.textContent=dbName[0].toUpperCase();
-        }
-      }).catch(function(){});
+      return getUserDisplayName(user.uid).then(function(name){
+        window._currentUser=user;
+        window._currentUserName=name;
+        window._currentUserEmail=email;
+        updateAuthUI(user);
+        loadUserProgress(user.uid);
+        // Reset form and button BEFORE navigating
+        _resetBtn('lp-btn','Sign In');
+        _clearBanner('lp-banner');
+        emailEl.value='';
+        passEl.value='';
+        // Navigate to home
+        SP('home');
+        showToast('Welcome back, '+name+'!','success');
+      });
     })
     .catch(function(e){
       _resetBtn('lp-btn','Sign In');
@@ -1159,13 +1378,6 @@ function doLogout(){
   modulesVisited={}; quizSetsCompleted={}; setScores={}; answers={};
   window._gameCompleted=false; window._forumPosted=false;
   window._currentUser=null; window._currentUserName=null; window._currentUserEmail=null;
-  // Always reset post button so new account doesn't see stale "Posting..." state
-  var pb=document.getElementById('post-comment-btn');
-  if(pb){pb.disabled=false;pb.textContent='Post Comment';pb.style.opacity='1';pb.style.background='';}
-  var sm=document.getElementById('post-status-msg');
-  if(sm){sm.textContent='';}
-  var ci=document.getElementById('comment-input');
-  if(ci){ci.value='';var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500 characters';}
   window._fb.signOut(window._fb.auth);
   updateAuthUI(null);
   renderProgress();
@@ -1478,43 +1690,47 @@ function likePost(key){
     });
   });
 }
-/* POST COMMENT */
+/* POST COMMENT -- uses synchronously cached name, never hangs */
 function postComment(){
   var inp=document.getElementById('comment-input');
   var text=inp?inp.value.trim():'';
   if(!text){showToast('Type something first.','info');return;}
   if(!window._currentUser){showAuthPage('login');return;}
-  if(!window._firebaseReady){showToast('Not connected to Firebase.','error');return;}
+  if(!window._firebaseReady){showToast('Not connected.','error');return;}
   if(text.length>500){showToast('Post too long (max 500 characters).','error');return;}
+  /* Synchronous name -- no async DB call that can stall */
   var name=window._currentUserName
            ||(window._currentUser.displayName)
            ||(window._currentUser.email||'').split('@')[0]
            ||'Student';
-  // Always get button by id — querySelector fails with extra attributes
-  var postBtn=document.getElementById('post-comment-btn');
-  var sm=document.getElementById('post-status-msg');
-  if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';postBtn.style.opacity='.7';}
-  if(sm){sm.textContent='';sm.style.color='#0d9488';}
-  // Direct push — no timeout wrapper that swallows real errors
-  window._fb.push(window._fb.ref(window._fb.db,'forum'),{
-    author:name, text:text, timestamp:Date.now(), likes:0, replies:{}
-  }).then(function(){
+  var postBtn=document.querySelector('#post-creation-area button[onclick="postComment()"]');
+  if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';}
+  
+  // Use Promise.race with 8 second timeout
+  var timeout=new Promise(function(resolve,reject){
+    setTimeout(function(){reject(new Error('Push timeout'));},8000);
+  });
+  
+  Promise.race([
+    window._fb.push(window._fb.ref(window._fb.db,'forum'),{
+      author:name, text:text, timestamp:Date.now(), likes:0, replies:{}
+    }),
+    timeout
+  ]).then(function(){
     inp.value='';
     var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500 characters';
     window._forumPosted=true;
-    saveProgress(); renderProgress();
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';postBtn.style.opacity='1';}
-    if(sm){sm.textContent='Posted!';sm.style.color='#0d9488';setTimeout(function(){sm.textContent='';},3000);}
-    showToast('Comment posted!','success');
+    saveProgress();
+    renderProgress();
+    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';}
+    showToast('Comment posted! Check the feed below.','success');
     setTimeout(loadForumPosts,400);
   }).catch(function(err){
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';postBtn.style.opacity='1';}
-    var errCode=err&&err.code?err.code:'';
-    var errMsg=err&&err.message?err.message:'unknown error';
-    var display=errCode?errCode+': '+errMsg:errMsg;
-    if(sm){sm.textContent='Error: '+display;sm.style.color='#ef4444';}
-    showToast('Post failed — check error below the text box.','error');
-    console.error('postComment error:',errCode,errMsg);
+    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';}
+    var errMsg='Post failed.';
+    if(err.message==='Push timeout'){errMsg='Post timeout - check your Firebase rules or internet connection.';}
+    showToast(errMsg,'error');
+    console.error('postComment:',err);
   });
 }
 
@@ -1551,6 +1767,122 @@ document.addEventListener('DOMContentLoaded',function(){
   setTimeout(loadLeaderboard,1400);
   setTimeout(function(){if(window._firebaseReady)loadForumPosts();},800);
 });
+
+/* ═══════════════════════════════════════
+   SCROLL REVEAL ENGINE
+   Uses IntersectionObserver (no jQuery)
+═══════════════════════════════════════ */
+(function(){
+  // Skip if user prefers reduced motion
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  /* --- Hero entrance on load --- */
+  window.addEventListener('load', function(){
+    var hero = document.getElementById('hero-inner');
+    if(hero) setTimeout(function(){ hero.classList.add('hero-loaded'); }, 80);
+  });
+
+  /* --- Generic IntersectionObserver for .reveal and .stagger-children --- */
+  if(!('IntersectionObserver' in window)) {
+    // Fallback for old browsers — just show everything
+    document.querySelectorAll('.reveal,.stagger-children').forEach(function(el){
+      el.classList.add('visible');
+    });
+    return;
+  }
+
+  var revealObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        // Once revealed, stop watching
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -48px 0px' });
+
+  function attachObservers(){
+    document.querySelectorAll('.reveal, .stagger-children').forEach(function(el){
+      // If already in viewport on page load, show immediately
+      var rect = el.getBoundingClientRect();
+      if(rect.top < window.innerHeight && rect.bottom > 0){
+        el.classList.add('visible');
+      } else {
+        revealObs.observe(el);
+      }
+    });
+  }
+
+  // Run on first load
+  document.addEventListener('DOMContentLoaded', attachObservers);
+
+  /* --- Re-attach when navigating to a new page (SPA) --- */
+  // Patch SP() to re-run observer after page switch
+  var _origSP = window.SP;
+  window.SP = function(id){
+    _origSP(id);
+    // After DOM is shown, attach observers to new page elements
+    setTimeout(function(){
+      attachObservers();
+      // Animate section titles on new page
+      document.querySelectorAll('#'+id+' .section-title').forEach(function(el){
+        el.classList.add('title-visible');
+      });
+    }, 50);
+  };
+
+  /* --- Parallax on hero text (subtle, desktop only) --- */
+  var heroSection = document.querySelector('.hero');
+  if(heroSection && window.innerWidth > 768){
+    var heroInner = document.getElementById('hero-inner');
+    window.addEventListener('scroll', function(){
+      var scrolled = window.scrollY;
+      if(scrolled < window.innerHeight && heroInner){
+        heroInner.style.transform = 'translateY(' + (scrolled * 0.22) + 'px)';
+        heroSection.style.opacity  = Math.max(0, 1 - scrolled / (window.innerHeight * 0.8));
+      }
+    }, { passive: true });
+  }
+
+  /* --- Smooth number count-up for stat-bar --- */
+  function countUp(el, target, duration){
+    var start = 0;
+    var startTime = null;
+    var isPercent = target.includes('%');
+    var isSec = target.includes('s') && !target.includes('%');
+    var num = parseFloat(target);
+    if(isNaN(num)) return;
+    function step(ts){
+      if(!startTime) startTime = ts;
+      var progress = Math.min((ts - startTime) / duration, 1);
+      var ease = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      var current = Math.round(ease * num * 10) / 10;
+      el.textContent = current + (isPercent ? '%' : isSec ? 's' : '');
+      if(progress < 1) requestAnimationFrame(step);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(step);
+  }
+
+  var statBarObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.querySelectorAll('.stat-num').forEach(function(el){
+          var original = el.textContent.trim();
+          countUp(el, original, 900);
+        });
+        statBarObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var sb = document.querySelector('.stat-bar');
+    if(sb) statBarObs.observe(sb);
+  });
+
+})();
+
 </script>
 </body>
 </html>
