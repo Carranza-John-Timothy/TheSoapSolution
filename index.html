@@ -44,6 +44,12 @@
       onAuthStateChanged(auth, user => {
         if (window._registering) return;
         window._currentUser = user || null;
+        // Cache name immediately from auth object (sync), refine from DB async
+        if (user) {
+          window._currentUserName = user.displayName || (user.email||'').split('@')[0] || 'Student';
+        } else {
+          window._currentUserName = null;
+        }
         if (typeof updateAuthUI    === 'function') updateAuthUI(user);
         if (user && typeof loadUserProgress === 'function') loadUserProgress(user.uid);
       });
@@ -397,20 +403,6 @@ footer strong{color:var(--teal-light)}
   .resources-grid{grid-template-columns:repeat(3,1fr)}
   .infographic-grid{grid-template-columns:repeat(3,1fr)}
 }
-
-/* Badge cards */
-.badge-card{border:1.5px solid var(--border);border-radius:11px;padding:1rem .85rem;text-align:center;background:var(--cream);opacity:.38;transition:all .25s}
-.badge-card.earned{opacity:1;border-color:var(--teal);background:linear-gradient(135deg,#f0fdfa,#e0f2fe);box-shadow:0 4px 14px rgba(13,148,136,.12)}
-/* Profile user card */
-.profile-user-card{background:linear-gradient(135deg,#0f172a 0%,#1e3a52 100%);border-radius:18px;padding:clamp(1.4rem,4vw,2rem);display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
-.profile-avatar-lg{width:72px;height:72px;min-width:72px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700}
-@media(max-width:640px){.profile-user-card{flex-direction:column;text-align:center}}
-/* Toast */
-.soap-toast{background:#1e293b;color:#fff;padding:.7rem 1.1rem;border-radius:10px;font-size:.84rem;font-weight:500;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.28);pointer-events:all;transition:opacity .35s,transform .35s}
-.soap-toast.t-success{border-left:3px solid #10b981}
-.soap-toast.t-error{border-left:3px solid #ef4444}
-.soap-toast.t-info{border-left:3px solid #0d9488}
-
 </style>
 </head>
 <body>
@@ -428,7 +420,7 @@ footer strong{color:var(--teal-light)}
     <a href="#" data-page="profile" onclick="SP('profile');return false">Profile</a>
   </div>
   <div class="user-chip" id="user-chip"><div class="user-avatar" id="user-av">?</div><span class="user-name" id="user-nm"></span><button class="user-logout" onclick="doLogout()" title="Sign out">✕</button></div>
-  <button class="nav-auth-btn" id="nav-auth-btn" onclick="showAuthPage('login')">Sign In</button>
+  <button class="nav-auth-btn" id="nav-auth-btn" onclick="openAuth()">Sign In</button>
 </nav>
 
 <!-- BOTTOM NAV -->
@@ -749,7 +741,7 @@ footer strong{color:var(--teal-light)}
     <!-- Login prompt for guests -->
     <div class="forum-login-prompt" id="forum-guest-prompt">
       <p>🔒 Sign in to post in the forum and track your learning progress.</p>
-      <button onclick="showAuthPage('login')">Sign In / Register</button>
+      <button onclick="openAuth()">Sign In / Register</button>
     </div>
     <div class="forum-logged-in" id="forum-user-bar">
       <p>✅ Signed in as <strong id="forum-user-name"></strong></p>
@@ -772,35 +764,20 @@ footer strong{color:var(--teal-light)}
       <div class="prog-track"><div class="prog-fill" id="prog-quiz" style="width:0%"></div></div>
     </div>
 
-    <!-- Post Creation Area -->
-    <div id="post-creation-area" style="display:none;background:linear-gradient(135deg,#f0fdfa 0%,#e0f2fe 100%);border:1.5px solid #99f6e4;border-radius:16px;padding:clamp(1.5rem,4vw,2.5rem);margin-bottom:2rem">
-      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--ink);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem">💬 Share Your Thoughts & Feedback</h3>
-      <div style="background:#fff;border-radius:12px;padding:1.2rem;border:1.5px solid #bae6fd">
-        <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, offer tips, or provide feedback to peers… (Shift+Enter for new line)" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:1rem;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;resize:vertical;min-height:100px;background:var(--cream);color:var(--ink);transition:border-color .2s" onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.8rem;flex-wrap:wrap;gap:.5rem">
-          <span id="char-count" style="font-size:.74rem;color:var(--muted);font-weight:500">0/500 characters</span>
-          <button onclick="postComment()" style="background:var(--teal);color:#fff;border:none;padding:.7rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;min-height:44px" onmouseover="this.style.background='var(--teal-dark)'" onmouseout="this.style.background='var(--teal)'">Post Comment</button>
-        </div>
+    <!-- Forum posts list -->
+    <div id="forum-posts-list"></div>
+
+        <div class="comment-box" id="comment-box-area">
+      <h3>&#x1F4AC; Share Your Thoughts</h3>
+      <textarea id="comment-input" placeholder="Share a clinical experience, ask a question, or add a tip... (Enter to post, Shift+Enter for new line)"></textarea>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.65rem;gap:.75rem;flex-wrap:wrap">
+        <span id="post-feedback" style="font-size:.83rem;font-weight:500"></span>
+        <button id="post-btn" onclick="postComment()" style="width:auto;padding:.75rem 1.8rem;flex-shrink:0">Post</button>
       </div>
     </div>
-    <div id="guest-comment-wall" style="background:var(--sky);border:1.5px solid #bae6fd;border-radius:14px;padding:1.4rem 1.6rem;text-align:center;margin-bottom:2rem">
-      <p style="color:var(--teal-dark);font-size:.9rem;margin-bottom:.75rem;font-weight:500">🔒 Sign in to read and post in the discussion forum.</p>
-      <button onclick="showAuthPage('login')" style="background:var(--teal);color:#fff;border:none;padding:.7rem 1.8rem;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;min-height:44px" onmouseover="this.style.background='var(--teal-dark)'" onmouseout="this.style.background='var(--teal)'">Sign In / Register</button>
-    </div>
-
-    <!-- Forum Filter/Sort -->
-    <div style="display:flex;gap:.6rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center">
-      <span style="font-size:.85rem;font-weight:600;color:var(--ink)">Filter:</span>
-      <button class="forum-filter-btn active" onclick="filterForum('all',this)" style="padding:.5rem 1rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--ink);transition:all .2s;min-height:40px" data-filter="all">All Posts</button>
-      <button class="forum-filter-btn" onclick="filterForum('recent',this)" style="padding:.5rem 1rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--ink);transition:all .2s;min-height:40px" data-filter="recent">Most Recent</button>
-      <button class="forum-filter-btn" onclick="filterForum('popular',this)" style="padding:.5rem 1rem;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--ink);transition:all .2s;min-height:40px" data-filter="popular">Most Discussed</button>
-    </div>
-
-    <!-- Forum posts list -->
-    <div id="forum-posts-list" style="display:flex;flex-direction:column;gap:1.1rem"></div>
-    <div id="forum-empty-state" style="text-align:center;padding:3rem 1rem;color:var(--muted)">
-      <div style="font-size:3rem;margin-bottom:.5rem">💭</div>
-      <p style="font-size:.95rem;font-weight:500">No posts yet. Be the first to start the discussion!</p>
+    <div id="guest-comment-wall" style="display:none;background:var(--sky);border:1px solid #bae6fd;border-radius:12px;padding:1.2rem;text-align:center;margin-top:1.5rem">
+      <p style="color:var(--teal-dark);font-size:.9rem;margin-bottom:.75rem">Sign in to read and post in the discussion forum.</p>
+      <button onclick="openAuth()" style="background:var(--teal);color:#fff;border:none;padding:.65rem 1.5rem;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Sign In / Register</button>
     </div>
   </div>
 </div>
@@ -815,724 +792,752 @@ footer strong{color:var(--teal-light)}
     <p class="section-sub">View your account details and learning progress.</p>
 
     <div class="forum-login-prompt" id="profile-guest">
-      <p>Sign in to view your profile and track your progress.</p>
-      <button onclick="showAuthPage('login')">Sign In / Register</button>
+      <p>🔒 Sign in to view your profile and saved progress.</p>
+      <button onclick="openAuth()">Sign In / Register</button>
     </div>
-    <div id="profile-card" style="display:none">
-      <div class="profile-user-card">
-        <div class="profile-avatar-lg" id="profile-avatar-big">S</div>
-        <div>
-          <h3 id="profile-name" style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#fff;margin-bottom:.25rem">Student</h3>
-          <p id="profile-email" style="color:#94a3b8;font-size:.85rem;margin-bottom:.75rem"></p>
-          <button onclick="doLogout()" style="background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:.4rem 1rem;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif">Sign Out</button>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.4rem">
-        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem .75rem;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--teal);font-weight:700" id="pstat-modules">0/3</div><div style="font-size:.7rem;color:var(--muted);margin-top:.15rem">Modules</div></div>
-        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem .75rem;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--teal);font-weight:700" id="pstat-quiz">0/15</div><div style="font-size:.7rem;color:var(--muted);margin-top:.15rem">Quiz Score</div></div>
-        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem .75rem;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--teal);font-weight:700" id="pstat-badges">0/5</div><div style="font-size:.7rem;color:var(--muted);margin-top:.15rem">Badges</div></div>
-        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem .75rem;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--teal);font-weight:700" id="pstat-pct">0%</div><div style="font-size:.7rem;color:var(--muted);margin-top:.15rem">Overall</div></div>
-      </div>
-      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.4rem 1.5rem;margin-bottom:1.1rem">
-        <h4 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;margin-bottom:1rem;color:var(--ink)">Learning Progress</h4>
-        <div class="prog-label">Modules: <span id="profile-modules-label">0/3</span></div>
-        <div class="prog-track" style="margin-bottom:1rem"><div class="prog-fill" id="profile-modules" style="width:0%"></div></div>
-        <div class="prog-label">Quiz: <span id="profile-quiz-label">0/15</span></div>
-        <div class="prog-track"><div class="prog-fill" id="profile-quiz" style="width:0%"></div></div>
-      </div>
-      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.4rem 1.5rem;margin-bottom:1.1rem">
-        <h4 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;margin-bottom:1rem;color:var(--ink)">Earned Badges</h4>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:.8rem">
-          <div class="badge-card" id="pb-explorer"><div style="font-size:1.75rem;margin-bottom:.3rem">&#x1F947;</div><div style="font-size:.8rem;font-weight:700;color:var(--ink)">Module Explorer</div><div style="font-size:.7rem;color:var(--muted);margin-top:.2rem">Visit your first module</div></div>
-          <div class="badge-card" id="pb-hygiene"><div style="font-size:1.75rem;margin-bottom:.3rem">&#x1F9FC;</div><div style="font-size:.8rem;font-weight:700;color:var(--ink)">Hygiene Advocate</div><div style="font-size:.7rem;color:var(--muted);margin-top:.2rem">Complete all 3 modules</div></div>
-          <div class="badge-card" id="pb-game"><div style="font-size:1.75rem;margin-bottom:.3rem">&#x1F3AE;</div><div style="font-size:.8rem;font-weight:700;color:var(--ink)">Game Master</div><div style="font-size:.7rem;color:var(--muted);margin-top:.2rem">Complete the game</div></div>
-          <div class="badge-card" id="pb-quiz"><div style="font-size:1.75rem;margin-bottom:.3rem">&#x1F3C5;</div><div style="font-size:.8rem;font-weight:700;color:var(--ink)">Quiz Champion</div><div style="font-size:.7rem;color:var(--muted);margin-top:.2rem">Finish all quiz sets</div></div>
-          <div class="badge-card" id="pb-contrib"><div style="font-size:1.75rem;margin-bottom:.3rem">&#x2B50;</div><div style="font-size:.8rem;font-weight:700;color:var(--ink)">Top Contributor</div><div style="font-size:.7rem;color:var(--muted);margin-top:.2rem">Post in the forum</div></div>
-        </div>
-      </div>
-      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:1.4rem 1.5rem">
-        <h4 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;margin-bottom:1rem;color:var(--ink)">Quiz Score Breakdown</h4>
-        <div style="display:flex;flex-direction:column;gap:.55rem">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;background:var(--cream);border-radius:9px;border:1px solid var(--border)"><span style="font-size:.87rem;color:var(--ink)">&#x1F9FC; Set 1 &mdash; Soap &amp; Water</span><span id="pqb-s1" style="font-weight:700;font-size:.9rem;color:var(--teal);background:var(--sky);padding:.2rem .65rem;border-radius:20px">--</span></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;background:var(--cream);border-radius:9px;border:1px solid var(--border)"><span style="font-size:.87rem;color:var(--ink)">&#x1F9F4; Set 2 &mdash; Alcohol Rub</span><span id="pqb-s2" style="font-weight:700;font-size:.9rem;color:var(--teal);background:var(--sky);padding:.2rem .65rem;border-radius:20px">--</span></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;background:var(--cream);border-radius:9px;border:1px solid var(--border)"><span style="font-size:.87rem;color:var(--ink)">&#x23F1; Set 3 &mdash; When to Perform</span><span id="pqb-s3" style="font-weight:700;font-size:.9rem;color:var(--teal);background:var(--sky);padding:.2rem .65rem;border-radius:20px">--</span></div>
-        </div>
-      </div>
+
+    <div class="progress-box" id="profile-card" style="display:none">
+      <h2>👤 <span id="profile-name">Student</span></h2>
+      <p style="margin-bottom:1rem;color:#cbd5f5">Email: <span id="profile-email"></span></p>
+      <div class="prog-label">Modules Viewed: <span id="profile-modules-label">0/3</span></div>
+      <div class="prog-track"><div class="prog-fill" id="profile-modules" style="width:0%"></div></div>
+      <div class="prog-label">Quiz Progress: <span id="profile-quiz-label">0/15</span></div>
+      <div class="prog-track"><div class="prog-fill" id="profile-quiz" style="width:0%"></div></div>
     </div>
   </div>
 </div>
 
 
-<!-- LOGIN PAGE -->
-<div id="page-login" style="display:none;position:fixed;inset:0;z-index:700;background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);overflow-y:auto;padding:2rem 1rem">
-  <div style="background:#fff;border-radius:24px;padding:2.5rem 2rem;width:100%;max-width:420px;margin:2rem auto;box-shadow:0 32px 80px rgba(0,0,0,.5)">
-    <div style="text-align:center;margin-bottom:1.5rem">
-      <div style="font-size:2.6rem;margin-bottom:.4rem">&#x1F9FC;</div>
-      <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:#0f172a;margin:.15rem 0">Welcome Back</h2>
-      <p style="color:#64748b;font-size:.88rem;margin:0">Sign in to TheSoapSolution</p>
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAuth()">✕</button>
+    <h2>Welcome</h2>
+    <p>Sign in or create an account to post in the forum and track your progress.</p>
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-tab="login" onclick="switchAuth('login',this)">Sign In</button>
+      <button class="modal-tab" data-tab="register" onclick="switchAuth('register',this)">Register</button>
     </div>
-    <div id="lp-banner" style="display:none;border-radius:10px;padding:.75rem 1rem;font-size:.85rem;font-weight:500;text-align:center;margin-bottom:1rem;border:1px solid transparent"></div>
-    <div style="margin-bottom:1rem">
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Email Address</label>
-      <input id="lp-email" type="email" placeholder="your@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()"
-        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none"/>
+    <div id="auth-login" class="auth-panel active">
+      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Password"/></div>
+      <button class="auth-submit" onclick="doLogin()">Sign In</button>
+      <div class="auth-err" id="login-err"></div>
     </div>
-    <div style="margin-bottom:1.4rem">
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Password</label>
-      <input id="lp-pass" type="password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"
-        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none"/>
+    <div id="auth-register" class="auth-panel">
+      <div class="form-group"><label>Display Name</label><input type="text" id="reg-name" placeholder="e.g. Maria Santos"/></div>
+      <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="your@email.com"/></div>
+      <div class="form-group"><label>Password (min 6 chars)</label><input type="password" id="reg-pass" placeholder="Create password"/></div>
+      <button class="auth-submit" onclick="doRegister()">Create Account</button>
+      <div class="auth-err" id="reg-err"></div>
     </div>
-    <button id="lp-btn" onclick="doLogin()"
-      style="width:100%;background:#0d9488;color:#fff;border:none;padding:1rem;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;min-height:52px;transition:background .2s">
-      Sign In
-    </button>
-    <p style="text-align:center;font-size:.84rem;color:#64748b;margin-top:1.2rem;margin-bottom:.25rem">
-      Don't have an account?
-      <button onclick="showAuthPage('register')" style="background:none;border:none;color:#0d9488;font-weight:700;cursor:pointer;font-size:.84rem;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:underline">Create one here</button>
-    </p>
-    <p style="text-align:center;margin:0">
-      <button onclick="SP('home')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:.82rem;font-family:'Plus Jakarta Sans',sans-serif">&#x2190; Back to Home</button>
-    </p>
-  </div>
-</div>
-
-<!-- REGISTER PAGE -->
-<div id="page-register" style="display:none;position:fixed;inset:0;z-index:700;background:linear-gradient(135deg,#0f172a 0%,#134e4a 60%,#0f172a 100%);overflow-y:auto;padding:2rem 1rem">
-  <div style="background:#fff;border-radius:24px;padding:2.5rem 2rem;width:100%;max-width:420px;margin:2rem auto;box-shadow:0 32px 80px rgba(0,0,0,.5)">
-    <div style="text-align:center;margin-bottom:1.5rem">
-      <div style="font-size:2.6rem;margin-bottom:.4rem">&#x1F9FC;</div>
-      <h2 style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:#0f172a;margin:.15rem 0">Create Account</h2>
-      <p style="color:#64748b;font-size:.88rem;margin:0">Join TheSoapSolution &mdash; it's free</p>
-    </div>
-    <div id="rp-banner" style="display:none;border-radius:10px;padding:.75rem 1rem;font-size:.85rem;font-weight:500;text-align:center;margin-bottom:1rem;border:1px solid transparent"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem">
-      <div>
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">First Name</label>
-        <input id="rp-fn" type="text" placeholder="Maria" autocomplete="given-name"
-          style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none"/>
-      </div>
-      <div>
-        <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Last Name</label>
-        <input id="rp-ln" type="text" placeholder="Santos" autocomplete="family-name"
-          style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none"/>
-      </div>
-    </div>
-    <div style="margin-bottom:1rem">
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Email Address</label>
-      <input id="rp-email" type="email" placeholder="your@email.com" autocomplete="email"
-        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none"/>
-    </div>
-    <div style="margin-bottom:1.4rem">
-      <label style="display:block;font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.4rem">Password <span style="font-weight:400;color:#64748b;font-size:.78rem">(min 6 chars)</span></label>
-      <input id="rp-pass" type="password" placeholder="Create a password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"
-        style="width:100%;padding:.8rem 1rem;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;font-family:'Plus Jakarta Sans',sans-serif;box-sizing:border-box;outline:none"/>
-    </div>
-    <button id="rp-btn" onclick="doRegister()"
-      style="width:100%;background:#0d9488;color:#fff;border:none;padding:1rem;border-radius:12px;font-size:1rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;min-height:52px;transition:background .2s">
-      Create Account
-    </button>
-    <p style="text-align:center;font-size:.84rem;color:#64748b;margin-top:1.2rem;margin-bottom:.25rem">
-      Already have an account?
-      <button onclick="showAuthPage('login')" style="background:none;border:none;color:#0d9488;font-weight:700;cursor:pointer;font-size:.84rem;font-family:'Plus Jakarta Sans',sans-serif;text-decoration:underline">Sign in here</button>
-    </p>
-    <p style="text-align:center;margin:0">
-      <button onclick="SP('home')" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:.82rem;font-family:'Plus Jakarta Sans',sans-serif">&#x2190; Back to Home</button>
-    </p>
   </div>
 </div>
 
 <!-- FULLSCREEN OVERLAY -->
 <div class="fs-overlay" id="fs-overlay" onclick="closeFS()">
-  <button class="fs-close" onclick="closeFS()">&#x2715;</button>
+  <button class="fs-close" onclick="closeFS()">✕</button>
   <img id="fs-img" src="" alt="" style="display:none"/>
   <div id="fs-emoji" class="fs-emoji" style="display:none"></div>
 </div>
 
-<!-- TOAST CONTAINER -->
-<div id="toast-container" style="position:fixed;bottom:calc(var(--bnav-h,60px)+.75rem);right:1rem;z-index:9000;display:flex;flex-direction:column;gap:.5rem;pointer-events:none"></div>
-
 <footer>
-  <p>TheSoapSolution Educational Portal &middot; NCM 110L &ndash; Nursing Informatics Laboratory</p>
-  <p>College of Health Sciences &middot; Prepared by <strong>Group 5 &ndash; BSN 2205</strong> &middot; Adviser: Cynthia P. Hernandez, RN, MAN</p>
+  <p>CleanHands Educational Portal · NCM 110L – Nursing Informatics Laboratory</p>
+  <p>College of Health Sciences · Prepared by <strong>Group 5 – BSN 2205</strong> · Adviser: Cynthia P. Hernandez, RN, MAN</p>
   <p style="margin-top:.4rem">Content based on <strong>WHO</strong> and <strong>CDC</strong> guidelines. For educational and academic use only.</p>
 </footer>
 
 
 <script>
-var modulesVisited={}, quizSetsCompleted={}, setScores={}, answers={};
-var _progressListener=null;
+// ============================================================
+// NAVIGATION
+// ============================================================
+var modulesVisited = {};
+var quizSetsCompleted = {};
+var setScores = {};
+var answers = {};
 
-/* ---- AUTH PAGE SHOW/HIDE ---- */
-function showAuthPage(which){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-  var lp=document.getElementById('page-login');
-  var rp=document.getElementById('page-register');
-  if(lp)lp.style.display='none';
-  if(rp)rp.style.display='none';
-  _clearBanner('lp-banner'); _clearBanner('rp-banner');
-  _resetBtn('lp-btn','Sign In');
-  _resetBtn('rp-btn','Create Account');
-  var target=(which==='register')?rp:lp;
-  if(target){target.style.display='block';window.scrollTo(0,0);}
-}
-function openAuth(tab){showAuthPage(tab||'login');}
-function closeAuth(){SP('home');}
-function switchAuth(tab){showAuthPage(tab);}
+function SP(id) {
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+  var target = document.getElementById(id);
+  if (target) target.classList.add('active');
 
-/* ---- BANNER / BUTTON HELPERS ---- */
-function _showBanner(id,msg,type){
-  var el=document.getElementById(id); if(!el) return;
-  el.textContent=msg; el.style.display='block';
-  var styles={
-    error:{bg:'#fef2f2',color:'#b91c1c',border:'#fecaca'},
-    success:{bg:'#f0fdf4',color:'#166534',border:'#bbf7d0'},
-    info:{bg:'#f0fdfa',color:'#0f766e',border:'#99f6e4'}
-  };
-  var s=styles[type]||styles.info;
-  el.style.background=s.bg; el.style.color=s.color; el.style.borderColor=s.border;
-}
-function _clearBanner(id){
-  var el=document.getElementById(id); if(!el) return;
-  el.textContent=''; el.style.display='none';
-}
-function _setBtnLoading(id,label){
-  var el=document.getElementById(id); if(!el) return;
-  el.disabled=true; el.textContent=label;
-  el.style.background='#94a3b8'; el.style.cursor='not-allowed';
-}
-function _resetBtn(id,label){
-  var el=document.getElementById(id); if(!el) return;
-  el.disabled=false; el.textContent=label;
-  el.style.background='#0d9488'; el.style.cursor='pointer';
-}
-
-/* ---- TOAST ---- */
-function showToast(msg,type,dur){
-  var c=document.getElementById('toast-container'); if(!c) return;
-  var d=document.createElement('div');
-  d.className='soap-toast t-'+(type||'info');
-  d.textContent=msg; c.appendChild(d);
-  setTimeout(function(){
-    d.style.opacity='0'; d.style.transform='translateY(8px)';
-    setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},350);
-  },dur||3200);
-}
-
-/* ---- NAVIGATION ---- */
-function SP(id){
-  var lp=document.getElementById('page-login');
-  var rp=document.getElementById('page-register');
-  if(lp)lp.style.display='none';
-  if(rp)rp.style.display='none';
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
-  var t=document.getElementById(id); if(t)t.classList.add('active');
-  document.querySelectorAll('.nav-links a[data-page],.bottom-nav a[data-page]').forEach(function(a){
-    a.classList.toggle('active',a.getAttribute('data-page')===id);
-  });
-  window.scrollTo({top:0,behavior:'smooth'});
-  if(id==='quiz')  setTimeout(loadLeaderboard,600);
-  if(id==='forum') setTimeout(loadForumPosts,300);
-  if(id==='modules'&&!modulesVisited['soap']){
-    modulesVisited['soap']=true; saveProgress(); renderProgress();
+  var allLinks = document.querySelectorAll('.nav-links a, .bottom-nav a');
+  for (var j = 0; j < allLinks.length; j++) {
+    var link = allLinks[j];
+    var dp = link.getAttribute('data-page');
+    if (dp === id) link.classList.add('active');
+    else link.classList.remove('active');
   }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (id === 'quiz') setTimeout(loadLeaderboard, 600);
+  if (id === 'forum') setTimeout(loadForumPosts, 300);
 }
-function goTo(id){SP(id);}
 
-/* ---- LOGIN ---- */
-function doLogin(){
-  if(!window._firebaseReady){_showBanner('lp-banner','Firebase not connected.','error');return;}
-  var emailEl=document.getElementById('lp-email');
-  var passEl=document.getElementById('lp-pass');
-  if(!emailEl||!passEl){_showBanner('lp-banner','Page not loaded correctly. Refresh.','error');return;}
-  var email=emailEl.value.trim();
-  var pass=passEl.value;
-  if(!email||!pass){_showBanner('lp-banner','Please enter your email and password.','error');return;}
-  _setBtnLoading('lp-btn','Signing in...');
-  _showBanner('lp-banner','Signing in...','info');
-  window._fb.signInWithEmailAndPassword(window._fb.auth,email,pass)
-    .then(function(cred){
-      var user=cred.user;
-      return getUserDisplayName(user.uid).then(function(name){
-        window._currentUser=user;
-        window._currentUserName=name;
-        window._currentUserEmail=email;
-        updateAuthUI(user);
-        loadUserProgress(user.uid);
-        // Reset form and button BEFORE navigating
-        _resetBtn('lp-btn','Sign In');
-        _clearBanner('lp-banner');
-        emailEl.value='';
-        passEl.value='';
-        // Navigate to home
-        SP('home');
-        showToast('Welcome back, '+name+'!','success');
+function goTo(id) { SP(id); }
+
+// ============================================================
+// AUTH UI
+// ============================================================
+function updateAuthUI(user) {
+  try {
+    var btn = document.getElementById('nav-auth-btn');
+    var chip = document.getElementById('user-chip');
+    var guestPrompt = document.getElementById('forum-guest-prompt');
+    var userBar = document.getElementById('forum-user-bar');
+    var commentBox = document.getElementById('comment-box-area');
+    var guestWall = document.getElementById('guest-comment-wall');
+    var profileGuest = document.getElementById('profile-guest');
+    var profileCard = document.getElementById('profile-card');
+    var profileName = document.getElementById('profile-name');
+    var profileEmail = document.getElementById('profile-email');
+
+    if (user) {
+      // Cache name synchronously first so postComment always has it
+      var baseName = user.displayName || (user.email ? user.email.split('@')[0] : 'Student');
+      window._currentUserName = baseName;
+      var email = user.email || '';
+      getUserDisplayName(user.uid).then(function(resolvedName) {
+        var name = resolvedName || baseName;
+        window._currentUserName = name; // refine with DB name
+        if (btn) btn.style.display = 'none';
+        if (chip) chip.classList.add('show');
+        var av = document.getElementById('user-av');
+        var nm = document.getElementById('user-nm');
+        if (av && name) av.textContent = name[0].toUpperCase();
+        if (nm) nm.textContent = name;
+        if (guestPrompt) guestPrompt.style.display = 'none';
+        if (userBar) userBar.classList.add('show');
+        var fn = document.getElementById('forum-user-name');
+        if (fn) fn.textContent = name;
+        if (commentBox) commentBox.style.display = '';
+        if (guestWall) guestWall.style.display = 'none';
+        if (profileGuest) profileGuest.style.display = 'none';
+        if (profileCard) profileCard.style.display = '';
+        if (profileName) profileName.textContent = name;
+        if (profileEmail) profileEmail.textContent = email;
+        loadForumPosts();
       });
-    })
-    .catch(function(e){
-      _resetBtn('lp-btn','Sign In');
-      var msg='Incorrect email or password.';
-      if(e.code==='auth/too-many-requests') msg='Too many attempts. Wait a moment.';
-      if(e.code==='auth/user-disabled')     msg='This account has been disabled.';
-      _showBanner('lp-banner',msg,'error');
-    });
-}
-
-/* ---- REGISTER ---- */
-function doRegister(){
-  if(!window._firebaseReady){_showBanner('rp-banner','Firebase not connected.','error');return;}
-  var fnEl   =document.getElementById('rp-fn');
-  var lnEl   =document.getElementById('rp-ln');
-  var emailEl=document.getElementById('rp-email');
-  var passEl =document.getElementById('rp-pass');
-  if(!fnEl||!lnEl||!emailEl||!passEl){_showBanner('rp-banner','Page error. Refresh and try again.','error');return;}
-  var fn   =fnEl.value.trim();
-  var ln   =lnEl.value.trim();
-  var email=emailEl.value.trim();
-  var pass =passEl.value;
-  if(!fn)          {_showBanner('rp-banner','Please enter your first name.','error');return;}
-  if(!ln)          {_showBanner('rp-banner','Please enter your last name.','error');return;}
-  if(!email)       {_showBanner('rp-banner','Please enter your email.','error');return;}
-  if(pass.length<6){_showBanner('rp-banner','Password needs 6+ characters.','error');return;}
-  var fullName=fn+' '+ln;
-  window._registering=true;
-  _setBtnLoading('rp-btn','Creating account...');
-  _showBanner('rp-banner','Setting up your account...','info');
-  window._fb.createUserWithEmailAndPassword(window._fb.auth,email,pass)
-    .then(function(cred){
-      var user=cred.user;
-      // Update profile first (critical)
-      return window._fb.updateProfile(user,{displayName:fullName}).then(function(){
-        // Save to database in background (non-blocking) with 5 second timeout
-        var timeout=new Promise(function(resolve){setTimeout(function(){resolve();},5000);});
-        var dbWrite=window._fb.set(window._fb.ref(window._fb.db,'users/'+user.uid+'/name'),fullName).catch(function(){});
-        return Promise.race([dbWrite,timeout]).then(function(){return user;});
-      });
-    })
-    .then(function(user){
-      // Sign out immediately — user must log in
-      return window._fb.signOut(window._fb.auth).then(function(){
-        window._registering=false;
-        window._currentUser=null;
-        window._currentUserName=null;
-        window._currentUserEmail=null;
-        modulesVisited={}; quizSetsCompleted={}; setScores={}; answers={};
-        window._gameCompleted=false; window._forumPosted=false;
-        // Clear fields
-        fnEl.value=''; lnEl.value=''; emailEl.value=''; passEl.value='';
-        _resetBtn('rp-btn','Create Account');
-        updateAuthUI(null);
-        // Go to login with success message
-        showToast('Account created successfully! Please sign in.','success');
-        showAuthPage('login');
-        _showBanner('lp-banner','Account created! Sign in with your new credentials.','success');
-      });
-    })
-    .catch(function(e){
-      window._registering=false;
-      _resetBtn('rp-btn','Create Account');
-      var msg='Registration failed. Please try again.';
-      if(e.code==='auth/email-already-in-use') msg='Email already registered. Sign in instead.';
-      else if(e.code==='auth/invalid-email')   msg='Please enter a valid email address.';
-      else if(e.code==='auth/weak-password')   msg='Password must be at least 6 characters.';
-      _showBanner('rp-banner',msg,'error');
-    });
-}
-
-/* ---- LOGOUT ---- */
-function doLogout(){
-  if(!window._firebaseReady) return;
-  if(_progressListener){_progressListener();_progressListener=null;}
-  modulesVisited={}; quizSetsCompleted={}; setScores={}; answers={};
-  window._gameCompleted=false; window._forumPosted=false;
-  window._currentUser=null; window._currentUserName=null; window._currentUserEmail=null;
-  window._fb.signOut(window._fb.auth);
-  updateAuthUI(null);
-  renderProgress();
-  showAuthPage('login');
-  _showBanner('lp-banner','You have been signed out.','info');
-}
-
-/* ---- GET NAME FROM FIREBASE ---- */
-function getUserDisplayName(uid){
-  if(!window._firebaseReady) return Promise.resolve('Student');
-  return window._fb.get(window._fb.ref(window._fb.db,'users/'+uid+'/name'))
-    .then(function(s){return s.exists()?s.val():'Student';})
-    .catch(function(){return 'Student';});
-}
-
-/* ---- UPDATE ALL UI AFTER AUTH CHANGE ---- */
-function updateAuthUI(user){
-  try{
-    var btn =document.getElementById('nav-auth-btn');
-    var chip=document.getElementById('user-chip');
-    if(user){
-      var name =window._currentUserName||user.displayName||(user.email||'').split('@')[0]||'Student';
-      var email=window._currentUserEmail||user.email||'';
-      window._currentUserName=name; window._currentUserEmail=email;
-      if(btn) btn.style.display='none';
-      if(chip)chip.classList.add('show');
-      var av=document.getElementById('user-av'); if(av)av.textContent=name[0].toUpperCase();
-      var nm=document.getElementById('user-nm'); if(nm)nm.textContent=name;
-      /* Forum */
-      var gp=document.getElementById('forum-guest-prompt'); if(gp)gp.style.display='none';
-      var ub=document.getElementById('forum-user-bar');     if(ub)ub.classList.add('show');
-      var fn=document.getElementById('forum-user-name');    if(fn)fn.textContent=name;
-      var pca=document.getElementById('post-creation-area'); if(pca)pca.style.display='';
-      var gw=document.getElementById('guest-comment-wall'); if(gw)gw.style.display='none';
-      /* Profile */
-      var pg =document.getElementById('profile-guest');      if(pg) pg.style.display='none';
-      var pc =document.getElementById('profile-card');       if(pc) pc.style.display='';
-      var pn =document.getElementById('profile-name');       if(pn) pn.textContent=name;
-      var pe =document.getElementById('profile-email');      if(pe) pe.textContent=email;
-      var pab=document.getElementById('profile-avatar-big'); if(pab)pab.textContent=name[0].toUpperCase();
-      renderProgress();
-    }else{
-      window._currentUserName=null; window._currentUserEmail=null;
-      if(btn){btn.style.display='';btn.textContent='Sign In';}
-      if(chip)chip.classList.remove('show');
-      var gp2=document.getElementById('forum-guest-prompt'); if(gp2)gp2.style.display='';
-      var ub2=document.getElementById('forum-user-bar');     if(ub2)ub2.classList.remove('show');
-      var pca2=document.getElementById('post-creation-area'); if(pca2)pca2.style.display='none';
-      var gw2=document.getElementById('guest-comment-wall'); if(gw2)gw2.style.display='';
-      var pg2=document.getElementById('profile-guest');      if(pg2)pg2.style.display='';
-      var pc2=document.getElementById('profile-card');       if(pc2)pc2.style.display='none';
-      renderProgress();
+    } else {
+      if (btn) { btn.style.display = ''; btn.textContent = 'Sign In'; }
+      if (chip) chip.classList.remove('show');
+      if (guestPrompt) guestPrompt.style.display = '';
+      if (userBar) userBar.classList.remove('show');
+      if (commentBox) commentBox.style.display = 'none';
+      if (guestWall) guestWall.style.display = '';
+      if (profileGuest) profileGuest.style.display = '';
+      if (profileCard) profileCard.style.display = 'none';
     }
-  }catch(err){console.warn('updateAuthUI:',err);}
+  } catch(e) { console.warn('updateAuthUI error:', e); }
 }
 
-/* ---- PROGRESS ---- */
-function loadUserProgress(uid){
-  if(!window._firebaseReady) return;
-  if(_progressListener){_progressListener();_progressListener=null;}
-  var pr=window._fb.ref(window._fb.db,'users/'+uid+'/progress');
-  _progressListener=window._fb.onValue(pr,function(snap){
-    var d=snap.val()||{};
-    modulesVisited={}; quizSetsCompleted={}; setScores={};
-    window._gameCompleted=false; window._forumPosted=false;
-    (d.modules||[]).forEach(function(m){modulesVisited[m]=true;});
-    (d.quizSets||[]).forEach(function(s){quizSetsCompleted[s]=true;});
-    if(d.s1>=0)setScores.s1=d.s1;
-    if(d.s2>=0)setScores.s2=d.s2;
-    if(d.s3>=0)setScores.s3=d.s3;
-    window._gameCompleted=(d.gameCompleted===1);
-    window._forumPosted=(d.forumPosted===1);
-    renderProgress();
-  });
+function openAuth() {
+  var m = document.getElementById('auth-modal');
+  if (m) m.classList.add('open');
 }
-function saveProgress(){
-  if(!window._firebaseReady||!window._currentUser) return;
-  window._fb.set(window._fb.ref(window._fb.db,'users/'+window._currentUser.uid+'/progress'),{
-    modules:   Object.keys(modulesVisited),
-    quizSets:  Object.keys(quizSetsCompleted),
-    s1: setScores.s1!==undefined?setScores.s1:-1,
-    s2: setScores.s2!==undefined?setScores.s2:-1,
-    s3: setScores.s3!==undefined?setScores.s3:-1,
-    gameCompleted: window._gameCompleted?1:0,
-    forumPosted:   window._forumPosted?1:0
-  });
+function closeAuth() {
+  var m = document.getElementById('auth-modal');
+  if (m) m.classList.remove('open');
 }
-function renderProgress(){
-  var mC=Object.keys(modulesVisited).length;
-  var qS=Object.keys(quizSetsCompleted).length;
-  var qC=qS*5;
-  var gD=!!window._gameCompleted;
-  var cD=!!window._forumPosted;
-  var earned=(mC>=1?1:0)+(mC>=3?1:0)+(gD?1:0)+(qS>=3?1:0)+(cD?1:0);
-  var pct=Math.min(100,Math.round(mC/3*40+qC/15*60));
-  function sv(id,v,w){var e=document.getElementById(id);if(e){if(w)e.style.width=v;else e.textContent=v;}}
-  sv('prog-modules-label',mC+'/3');
-  sv('prog-modules',Math.round(mC/3*100)+'%',true);
-  sv('prog-quiz-label',qC+'/15');
-  sv('prog-quiz',Math.round(qC/15*100)+'%',true);
-  sv('profile-modules-label',mC+'/3');
-  sv('profile-modules',Math.round(mC/3*100)+'%',true);
-  sv('profile-quiz-label',qC+'/15');
-  sv('profile-quiz',Math.round(qC/15*100)+'%',true);
-  sv('pstat-modules',mC+'/3');
-  sv('pstat-quiz',qC+'/15');
-  sv('pstat-badges',earned+'/5');
-  sv('pstat-pct',pct+'%');
-  sv('pqb-s1',setScores.s1!==undefined?setScores.s1+'/5':'--');
-  sv('pqb-s2',setScores.s2!==undefined?setScores.s2+'/5':'--');
-  sv('pqb-s3',setScores.s3!==undefined?setScores.s3+'/5':'--');
-  function bd(id,on){var e=document.getElementById(id);if(e)e.classList.toggle('earned',!!on);}
-  bd('badge-explorer',mC>=1); bd('badge-hygiene',mC>=3);
-  bd('badge-game',gD);         bd('badge-quiz',qS>=3);  bd('badge-contrib',cD);
-  bd('pb-explorer',mC>=1);    bd('pb-hygiene',mC>=3);
-  bd('pb-game',gD);            bd('pb-quiz',qS>=3);      bd('pb-contrib',cD);
+function switchAuth(tab, btn) {
+  var panels = document.querySelectorAll('.auth-panel');
+  var tabs = document.querySelectorAll('.modal-tab');
+  for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+  for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+  var panel = document.getElementById('auth-' + tab);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
 }
 
-/* ---- MODULE TABS ---- */
-function switchMTab(id,btn){
-  document.querySelectorAll('.mpanel').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.mtab').forEach(function(t){t.classList.remove('active');});
-  var panel=document.getElementById('mtab-'+id); if(panel)panel.classList.add('active');
-  if(btn)btn.classList.add('active');
-  modulesVisited[id]=true; saveProgress(); renderProgress();
-}
-
-/* ---- DRAG AND DROP ---- */
-var dragEl=null;
-function shuffleBank(bank){
-  var items=Array.prototype.slice.call(bank.querySelectorAll('.drag-label'));
-  for(var i=items.length-1;i>0;i--){
-    var j=Math.floor(Math.random()*(i+1));
-    bank.appendChild(items[j]);
-    var tmp=items[j]; items[j]=items[i]; items[i]=tmp;
-  }
-}
-function bindLabels(){
-  document.querySelectorAll('.drag-label').forEach(function(el){
-    el.addEventListener('dragstart',function(){dragEl=el;el.style.opacity='.45';});
-    el.addEventListener('dragend',function(){if(dragEl)dragEl.style.opacity='1';dragEl=null;});
-    el.addEventListener('touchstart',touchStart,{passive:true});
-    el.addEventListener('touchend',touchEnd);
-  });
-}
-function initDND(){
-  var sb=document.getElementById('bank-soap'),rb=document.getElementById('bank-rub');
-  if(sb)shuffleBank(sb); if(rb)shuffleBank(rb);
-  bindLabels();
-  document.querySelectorAll('.drop-zone').forEach(function(z){
-    z.addEventListener('dragover',function(e){e.preventDefault();z.classList.add('drag-over');});
-    z.addEventListener('dragleave',function(){z.classList.remove('drag-over');});
-    z.addEventListener('drop',function(e){e.preventDefault();dropOnZone(z);});
-    z.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
-  });
-}
-var touchDrag=null,touchClone=null;
-function touchStart(e){touchDrag=e.currentTarget;touchClone=touchDrag.cloneNode(true);touchClone.style.cssText='position:fixed;z-index:9999;opacity:.85;pointer-events:none;transform:scale(1.05)';document.body.appendChild(touchClone);moveTouchClone(e.touches[0]);}
-function moveTouchClone(t){if(!touchClone)return;touchClone.style.left=(t.clientX-60)+'px';touchClone.style.top=(t.clientY-20)+'px';}
-function touchEnd(e){if(touchClone){document.body.removeChild(touchClone);touchClone=null;}if(!touchDrag)return;var t=e.changedTouches[0],el=document.elementFromPoint(t.clientX,t.clientY),z=el?el.closest('.drop-zone'):null;if(z){dragEl=touchDrag;dropOnZone(z);}touchDrag=null;dragEl=null;}
-document.addEventListener('touchmove',function(e){if(touchClone)moveTouchClone(e.touches[0]);},{passive:true});
-function dropOnZone(zone){if(!dragEl)return;zone.classList.remove('drag-over','correct','wrong');var game=zone.closest('.dnd-game').id.replace('dnd-',''),slot=zone.querySelector('.drop-slot'),prev=zone.dataset.current;if(prev){var bk=document.getElementById('bank-'+game);if(bk){var pe=bk.querySelector('[data-label="'+prev+'"]');if(pe)pe.classList.remove('placed');}}slot.textContent=dragEl.textContent;slot.classList.add('filled');zone.dataset.current=dragEl.dataset.label;dragEl.classList.add('placed');}
-function checkDND(game){var zones=document.querySelectorAll('#grid-'+game+' .drop-zone'),ok=0,total=zones.length,filled=0;zones.forEach(function(z){var c=z.dataset.current,a=z.dataset.answer;if(c){filled++;if(c===a){z.classList.add('correct');z.classList.remove('wrong');ok++;}else{z.classList.add('wrong');z.classList.remove('correct');}}});var fb=document.getElementById('fb-'+game);if(filled<total){if(fb)fb.textContent='Fill all '+total+' slots first.';return;}if(ok===total){if(fb)fb.textContent='Perfect! All '+total+' steps correct!';if(!window._gameCompleted){window._gameCompleted=true;saveProgress();renderProgress();showToast('Game Master badge earned!','success');}}else{if(fb)fb.textContent=ok+'/'+total+' correct. Red slots need fixing.';}}
-function resetDND(game){document.querySelectorAll('#grid-'+game+' .drop-zone').forEach(function(z){z.classList.remove('correct','wrong','drag-over');delete z.dataset.current;var sl=z.querySelector('.drop-slot');sl.textContent='Drop here';sl.classList.remove('filled');});var bk=document.getElementById('bank-'+game);bk.querySelectorAll('.drag-label').forEach(function(el){el.classList.remove('placed');el.style.opacity='1';});var fb=document.getElementById('fb-'+game);if(fb)fb.textContent='';shuffleBank(bk);bindLabels();}
-function switchDND(id,btn){document.querySelectorAll('.dnd-game').forEach(function(g){g.classList.remove('active');});document.querySelectorAll('.dnd-tab').forEach(function(t){t.classList.remove('active');});var g=document.getElementById('dnd-'+id);if(g)g.classList.add('active');if(btn)btn.classList.add('active');}
-
-/* ---- QUIZ ---- */
-var setMap={s1:{qs:['q1','q2','q3','q4','q5'],label:'Soap & Water'},s2:{qs:['q6','q7','q8','q9','q10'],label:'Alcohol Rub'},s3:{qs:['q11','q12','q13','q14','q15'],label:'When to Perform'}};
-var fbText={q1:{c:'Correct! WHO recommends 40-60 seconds.',w:'Incorrect. Answer: B (40-60 seconds).'},q2:{c:'Correct! Use the towel to turn off the tap.',w:'Incorrect. Answer: B.'},q3:{c:'Correct! Thumbs and fingertips are most missed.',w:'Incorrect. Answer: C.'},q4:{c:'Correct! Warm or cold water is fine.',w:'Incorrect. Answer: B.'},q5:{c:'Correct! Soap and water for visible soil/C.diff.',w:'Incorrect. Answer: C.'},q6:{c:'Correct! Rub 20-30 seconds until dry.',w:'Incorrect. Answer: B.'},q7:{c:'Correct! Never rinse -- let it air-dry.',w:'Incorrect. Answer: C.'},q8:{c:'Correct! Effective vs most bacteria and enveloped viruses.',w:'Incorrect. Answer: B.'},q9:{c:'Correct! Apply a palmful to cover all surfaces.',w:'Incorrect. Answer: B.'},q10:{c:'Correct! Microorganisms hide under jewelry.',w:'Incorrect. Answer: C.'},q11:{c:'Correct! WHO identifies exactly 5 Moments.',w:'Incorrect. Answer: B.'},q12:{c:'Correct! Catheter insertion is an aseptic task.',w:'Incorrect. Answer: B.'},q13:{c:'Correct! Gloves have micro-perforations.',w:'Incorrect. Answer: B.'},q14:{c:'Correct! Patient surroundings = WHO Moment 5.',w:'Incorrect. Answer: C.'},q15:{c:'Correct! HAI = acquired during care, not on admission.',w:'Incorrect. Answer: C.'}};
-function switchQSet(id,btn){document.querySelectorAll('.qset-panel').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.qset-btn').forEach(function(b){b.classList.remove('active');});var p=document.getElementById('qset-'+id);if(p)p.classList.add('active');if(btn)btn.classList.add('active');}
-function sel(btn,qid,type){var grp=document.getElementById(qid);if(grp.dataset.answered)return;grp.dataset.answered='1';grp.querySelectorAll('.opt').forEach(function(o){o.disabled=true;});btn.classList.add(type==='c'?'correct':'wrong');answers[qid]=(type==='c');}
-function submitSet(setId){var info=setMap[setId],score=0;info.qs.forEach(function(qid){var grp=document.getElementById(qid);if(!grp.dataset.answered){grp.dataset.answered='1';grp.querySelectorAll('.opt').forEach(function(o){o.disabled=true;});answers[qid]=false;}var fb2=document.getElementById('fb-'+qid);if(answers[qid]){score++;if(fb2){fb2.className='qfb show ok';fb2.textContent=fbText[qid].c;}}else{if(fb2){fb2.className='qfb show bad';fb2.textContent=fbText[qid].w;}grp.querySelectorAll('.opt').forEach(function(o){if(!o.classList.contains('wrong'))o.classList.add('correct');});}});setScores[setId]=score;quizSetsCompleted[setId]=true;saveProgress();renderProgress();showToast('Set '+(setId.replace('s',''))+' submitted: '+score+'/5',score===5?'success':'info');var pct=score/5*100,sc=document.getElementById('sc-'+setId);if(sc)sc.classList.add('show');var scT=document.getElementById('sc-'+setId+'-text'),scM=document.getElementById('sc-'+setId+'-msg');if(scT)scT.textContent=score+' / 5 -- '+info.label;if(scM)scM.textContent=pct===100?'Perfect!':pct>=60?'Good -- review missed items.':'Keep studying!';setTimeout(function(){var pb=document.getElementById('pb-'+setId);if(pb)pb.style.width=pct+'%';},100);var sub=document.getElementById('sub-'+setId);if(sub)sub.style.display='none';if(sc)sc.scrollIntoView({behavior:'smooth',block:'start'});if(setId==='s3'){var total=(setScores.s1||0)+(setScores.s2||0)+(setScores.s3||0);var fd=document.getElementById('final-score-display');if(fd){fd.style.display='block';fd.textContent='Total Score: '+total+'/15 ('+Math.round(total/15*100)+'%)';}var lba=document.getElementById('lb-submit-area');if(lba)lba.style.display='flex';if(window._currentUser&&window._firebaseReady)autoSaveScore(total);}}
-function autoSaveScore(total){var uid=window._currentUser.uid;getUserDisplayName(uid).then(function(name){window._fb.set(window._fb.ref(window._fb.db,'scores/'+uid),{name:name,total:total,s1:setScores.s1||0,s2:setScores.s2||0,s3:setScores.s3||0,timestamp:Date.now()});loadLeaderboard();});}
-function resetSet(setId){setMap[setId].qs.forEach(function(qid){var grp=document.getElementById(qid);delete grp.dataset.answered;grp.querySelectorAll('.opt').forEach(function(o){o.disabled=false;o.classList.remove('correct','wrong');});var fb2=document.getElementById('fb-'+qid);if(fb2)fb2.className='qfb';delete answers[qid];});delete setScores[setId];delete quizSetsCompleted[setId];saveProgress();renderProgress();var sc=document.getElementById('sc-'+setId);if(sc)sc.classList.remove('show');var pb=document.getElementById('pb-'+setId);if(pb)pb.style.width='0%';var sub=document.getElementById('sub-'+setId);if(sub)sub.style.display='';if(setId==='s3'){var fd=document.getElementById('final-score-display');if(fd)fd.style.display='none';var lba=document.getElementById('lb-submit-area');if(lba)lba.style.display='none';}window.scrollTo({top:0,behavior:'smooth'});}
-function postScore(){if(!window._currentUser){showAuthPage('login');return;}var total=(setScores.s1||0)+(setScores.s2||0)+(setScores.s3||0);autoSaveScore(total);var lba=document.getElementById('lb-submit-area');if(lba)lba.innerHTML='<p style="color:var(--teal-light);font-size:.85rem;padding:.5rem 0">Score posted!</p>';}
-
-/* ---- LEADERBOARD ---- */
-function loadLeaderboard(){if(!window._firebaseReady)return;var q=window._fb.query(window._fb.ref(window._fb.db,'scores'),window._fb.orderByChild('total'));window._fb.onValue(q,function(snap){var data=snap.val(),list=document.getElementById('lb-list');if(!list)return;if(!data){list.innerHTML='<div class="lb-empty">No scores yet -- be the first!</div>';return;}var rows=Object.values(data).sort(function(a,b){return b.total-a.total;}).slice(0,20);var h='';rows.forEach(function(e,i){var rank=i===0?'&#x1F947;':i===1?'&#x1F948;':i===2?'&#x1F949;':(i+1);var isMe=window._currentUserName&&e.name===window._currentUserName;var sty=isMe?' style="background:linear-gradient(90deg,#f0fdfa,#e0f2fe);border:1.5px solid var(--teal)"':'';h+='<div class="lb-row"'+sty+'><div class="lb-rank">'+rank+'</div><div class="lb-name">'+e.name+(isMe?' <span style="font-size:.7rem;color:var(--teal);font-weight:700">(You)</span>':'')+' </div><div><div class="lb-score">'+e.total+'/15</div><div class="lb-set">'+Math.round(e.total/15*100)+'%</div></div></div>';});list.innerHTML=h;});}
-
-/* ---- FORUM ---- */
-var forumData={};
-function loadForumPosts(){
-  if(!window._firebaseReady)return;
-  var q=window._fb.query(window._fb.ref(window._fb.db,'forum'),window._fb.orderByChild('timestamp'));
-  window._fb.onValue(q,function(snap){
-    var data=snap.val();
-    forumData={};
-    if(data){Object.keys(data).forEach(function(k){forumData[k]=data[k];});}
-    renderForumPosts('all');
-  });
-}
-function renderForumPosts(filter){
-  var list=document.getElementById('forum-posts-list');
-  var empty=document.getElementById('forum-empty-state');
-  if(!list)return;
-  var pairs=Object.entries(forumData).sort(function(a,b){return b[1].timestamp-a[1].timestamp;});
-  if(filter==='popular'){pairs.sort(function(a,b){return(b[1].likes||0)-(a[1].likes||0);});}
-  var colors=['#0d9488','#f59e0b','#8b5cf6','#ef4444','#3b82f6','#ec4899','#10b981','#06b6d4'];
-  if(pairs.length===0){list.innerHTML='';if(empty)empty.style.display='';return;}
-  if(empty)empty.style.display='none';
-  list.innerHTML='';
-  pairs.forEach(function(pair,i){
-    var key=pair[0], p=pair[1], color=colors[i%colors.length];
-    var init=(p.author||'?')[0].toUpperCase();
-    var d=new Date(p.timestamp);
-    var now=new Date();
-    var diffMs=now-d;
-    var diffMins=Math.floor(diffMs/60000);
-    var diffHours=Math.floor(diffMs/3600000);
-    var diffDays=Math.floor(diffMs/86400000);
-    var timeStr=diffMins<1?'now':diffMins<60?diffMins+'m ago':diffHours<24?diffHours+'h ago':diffDays<7?diffDays+'d ago':d.toLocaleDateString('en-PH',{month:'short',day:'numeric'});
-    var safe=(p.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    var lines=safe.split('\n');safe=lines.join('<br>');
-    var replyCount=p.replies?Object.keys(p.replies).length:0;
-    var html='<div class="forum-post-card" data-key="'+key+'" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:1.4rem;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)">';
-    html+='<div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1rem">';
-    html+='<div class="avatar" style="width:42px;height:42px;min-width:42px;border-radius:50%;background:'+color+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem">'+init+'</div>';
-    html+='<div style="flex:1;min-width:0">';
-    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;flex-wrap:wrap;gap:.5rem">';
-    html+='<div><div class="poster-name" style="font-weight:700;font-size:.95rem;color:var(--ink)">'+(p.author||'Student')+'</div><div class="poster-time" style="font-size:.78rem;color:var(--muted);margin-top:.2rem">'+timeStr+'</div></div>';
-    html+='</div>';
-    html+='<div class="forum-text" style="font-size:.9rem;line-height:1.65;color:#334155;word-wrap:break-word">'+safe+'</div>';
-    html+='</div></div>';
-    html+='<div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1rem;padding-top:1rem;border-top:1px solid #e2e8f0">';
-    html+='<button class="forum-action-btn" onclick="likePost(\''+key+'\')" style="background:none;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:.3rem;transition:all .2s;min-height:36px;border:1px solid transparent" onmouseover="this.style.background=\'#e0f2fe\';this.style.color=\'var(--teal)\'" onmouseout="this.style.background=\'none\';this.style.color=\'var(--muted)\'">👍 <span>'+(p.likes||0)+'</span></button>';
-    html+='<button class="forum-reply-btn" onclick="toggleReplyForm(\''+key+'\')" style="background:none;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:.3rem;transition:all .2s;min-height:36px;border:1px solid transparent" onmouseover="this.style.background=\'#e0f2fe\';this.style.color=\'var(--teal)\'" onmouseout="this.style.background=\'none\';this.style.color=\'var(--muted)\'">💬 <span>'+replyCount+'</span></button>';
-    html+='</div>';
-    html+='<div id="reply-form-'+key+'" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid #e2e8f0">';
-    if(window._currentUser){
-      html+='<div style="background:var(--cream);border:1.5px solid #e2e8f0;border-radius:10px;padding:1rem">';
-      html+='<textarea class="reply-input" data-key="'+key+'" placeholder="Share your feedback or reply…" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:.8rem;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:.85rem;resize:vertical;min-height:80px;background:#fff;color:var(--ink);transition:border-color .2s" onfocus="this.style.borderColor=\'var(--teal)\'" onblur="this.style.borderColor=\'#e2e8f0\'"></textarea>';
-      html+='<div style="display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap">';
-      html+='<button onclick="postReply(\''+key+'\')" style="background:var(--teal);color:#fff;border:none;padding:.5rem 1.2rem;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:\'Plus Jakarta Sans\',sans-serif;transition:all .2s;min-height:40px">Send Reply</button>';
-      html+='<button onclick="toggleReplyForm(\''+key+'\')" style="background:none;border:1px solid #e2e8f0;padding:.5rem 1.2rem;border-radius:7px;font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted);font-family:\'Plus Jakarta Sans\',sans-serif;transition:all .2s;min-height:40px">Cancel</button>';
-      html+='</div></div>';
-    }else{
-      html+='<p style="color:var(--muted);font-size:.85rem;text-align:center">Sign in to reply to this post</p>';
-    }
-    html+='</div>';
-    /* Display replies */
-    if(replyCount>0){
-      html+='<div id="replies-container-'+key+'" style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f1f5f9;display:flex;flex-direction:column;gap:.8rem">';
-      Object.keys(p.replies||{}).forEach(function(rkey){
-        var r=p.replies[rkey];
-        var rinit=(r.author||'?')[0].toUpperCase();
-        var rd=new Date(r.timestamp);
-        var rdiffMs=now-rd;
-        var rdiffMins=Math.floor(rdiffMs/60000);
-        var rdiffHours=Math.floor(rdiffMs/3600000);
-        var rtimeStr=rdiffMins<1?'now':rdiffMins<60?rdiffMins+'m ago':rdiffHours<24?rdiffHours+'h ago':rd.toLocaleDateString();
-        var rsafe=(r.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split('\n').join('<br>');
-        var rcolor=colors[(Object.keys(p.replies).indexOf(rkey)+1)%colors.length];
-        html+='<div style="background:#f8fafc;border-left:3px solid '+rcolor+';border-radius:6px;padding:.9rem;margin-left:0">';
-        html+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">';
-        html+='<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+rcolor+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem">'+rinit+'</div>';
-        html+='<div>';
-        html+='<div style="font-weight:600;font-size:.82rem;color:var(--ink)">'+(r.author||'Student')+'</div>';
-        html+='<div style="font-size:.72rem;color:var(--muted)">'+rtimeStr+'</div>';
-        html+='</div></div>';
-        html+='<div style="font-size:.85rem;line-height:1.55;color:#334155;word-wrap:break-word">'+rsafe+'</div>';
-        html+='</div>';
-      });
-      html+='</div>';
-    }
-    html+='</div>';
-    list.innerHTML+=html;
-  });
-}
-function filterForum(type,btn){
-  document.querySelectorAll('.forum-filter-btn').forEach(function(b){
-    b.style.background='#fff';b.style.color='var(--ink)';b.style.borderColor='#e2e8f0';
-  });
-  if(btn){btn.style.background='var(--teal)';btn.style.color='#fff';btn.style.borderColor='var(--teal)';}
-  renderForumPosts(type);
-}
-function toggleReplyForm(key){
-  var form=document.getElementById('reply-form-'+key);
-  if(form)form.style.display=form.style.display==='none'?'block':'none';
-}
-function postReply(key){
-  if(!window._currentUser){showAuthPage('login');return;}
-  var input=document.querySelector('.reply-input[data-key="'+key+'"]');
-  if(!input)return;
-  var text=input.value.trim();
-  if(!text){showToast('Type a reply first.','info');return;}
-  if(!window._firebaseReady){showToast('Not connected.','error');return;}
-  var name=window._currentUserName||(window._currentUser.displayName)||(window._currentUser.email||'').split('@')[0]||'Student';
-  input.disabled=true;
-  window._fb.set(window._fb.ref(window._fb.db,'forum/'+key+'/replies/'+Date.now()),{
-    author:name, text:text, timestamp:Date.now()
-  }).then(function(){
-    input.value='';input.disabled=false;
-    window._forumPosted=true;
-    saveProgress();
-    renderProgress();
-    setTimeout(loadForumPosts,300);
-    showToast('Reply posted!','success');
-    toggleReplyForm(key);
-  }).catch(function(err){
-    input.disabled=false;
-    showToast('Reply failed. Check Firebase rules.','error');
-    console.error('postReply:',err);
-  });
-}
-function likePost(key){
-  if(!window._firebaseReady||!window._currentUser)return;
-  window._fb.get(window._fb.ref(window._fb.db,'forum/'+key+'/likes')).then(function(snap){
-    window._fb.set(window._fb.ref(window._fb.db,'forum/'+key+'/likes'),(snap.exists()?snap.val():0)+1).then(function(){
-      setTimeout(loadForumPosts,200);
+function doLogin() {
+  if (!window._firebaseReady) { document.getElementById('login-err').textContent = 'Firebase not connected.'; return; }
+  var email = document.getElementById('login-email').value.trim();
+  var pass = document.getElementById('login-pass').value;
+  var err = document.getElementById('login-err');
+  err.style.color = ''; // reset to error color
+  err.textContent = 'Signing in...';
+  window._fb.signInWithEmailAndPassword(window._fb.auth, email, pass)
+    .then(function(result) {
+      var user = result.user;
+      // Immediate visual confirmation
+      err.style.color = '#16a34a';
+      err.textContent = 'Signed in successfully!';
+      // Proactively update UI in case auth listener is delayed
+      if (typeof updateAuthUI === 'function') updateAuthUI(user);
+      setTimeout(function() {
+        err.textContent = '';
+        closeAuth();
+        // Take user straight to forum where login status is obvious
+        SP('forum');
+      }, 900);
+    })
+    .catch(function(e) {
+      if (e.code === 'auth/user-not-found') err.textContent = 'No account found. Please register.';
+      else if (e.code === 'auth/wrong-password') err.textContent = 'Incorrect password.';
+      else if (e.code === 'auth/invalid-credential') err.textContent = 'Email or password is incorrect.';
+      else err.textContent = e.message;
     });
-  });
-}
-/* POST COMMENT -- uses synchronously cached name, never hangs */
-function postComment(){
-  var inp=document.getElementById('comment-input');
-  var text=inp?inp.value.trim():'';
-  if(!text){showToast('Type something first.','info');return;}
-  if(!window._currentUser){showAuthPage('login');return;}
-  if(!window._firebaseReady){showToast('Not connected.','error');return;}
-  if(text.length>500){showToast('Post too long (max 500 characters).','error');return;}
-  /* Synchronous name -- no async DB call that can stall */
-  var name=window._currentUserName
-           ||(window._currentUser.displayName)
-           ||(window._currentUser.email||'').split('@')[0]
-           ||'Student';
-  var postBtn=document.querySelector('#post-creation-area button[onclick="postComment()"]');
-  if(postBtn){postBtn.disabled=true;postBtn.textContent='Posting...';}
-  
-  // Use Promise.race with 8 second timeout
-  var timeout=new Promise(function(resolve,reject){
-    setTimeout(function(){reject(new Error('Push timeout'));},8000);
-  });
-  
-  Promise.race([
-    window._fb.push(window._fb.ref(window._fb.db,'forum'),{
-      author:name, text:text, timestamp:Date.now(), likes:0, replies:{}
-    }),
-    timeout
-  ]).then(function(){
-    inp.value='';
-    var cc=document.getElementById('char-count');if(cc)cc.textContent='0/500 characters';
-    window._forumPosted=true;
-    saveProgress();
-    renderProgress();
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';}
-    showToast('Comment posted! Check the feed below.','success');
-    setTimeout(loadForumPosts,400);
-  }).catch(function(err){
-    if(postBtn){postBtn.disabled=false;postBtn.textContent='Post Comment';}
-    var errMsg='Post failed.';
-    if(err.message==='Push timeout'){errMsg='Post timeout - check your Firebase rules or internet connection.';}
-    showToast(errMsg,'error');
-    console.error('postComment:',err);
-  });
 }
 
-/* ---- FULLSCREEN ---- */
-function openFS(src,emoji){var ov=document.getElementById('fs-overlay'),img=document.getElementById('fs-img'),em=document.getElementById('fs-emoji');if(src&&src!=='undefined'&&src!==''){img.src=src;img.style.display='';em.style.display='none';}else{img.style.display='none';em.textContent=emoji||'?';em.style.display='';}ov.classList.add('open');document.body.style.overflow='hidden';}
-function closeFS(){var ov=document.getElementById('fs-overlay');if(ov)ov.classList.remove('open');document.body.style.overflow='';}
-
-/* ---- INIT ---- */
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFS();});
-document.addEventListener('DOMContentLoaded',function(){
-  initDND();
-  renderProgress();
-  
-  /* Setup forum post creation area */
-  var ci=document.getElementById('comment-input');
-  if(ci){
-    ci.addEventListener('input',function(){
-      var cc=document.getElementById('char-count');
-      if(cc)cc.textContent=ci.value.length+'/500 characters';
-    });
-    ci.addEventListener('keydown',function(e){
-      if(e.key==='Enter'&&!e.shiftKey){
-        e.preventDefault();
-        postComment();
+function doRegister() {
+  if (!window._firebaseReady) { document.getElementById('reg-err').textContent = 'Firebase not connected.'; return; }
+  var name = document.getElementById('reg-name').value.trim();
+  var email = document.getElementById('reg-email').value.trim();
+  var pass = document.getElementById('reg-pass').value;
+  var err = document.getElementById('reg-err');
+  if (!name) { err.textContent = 'Please enter a display name.'; return; }
+  err.style.color = ''; // reset to default (error) color
+  err.textContent = 'Creating account...';
+  window._fb.createUserWithEmailAndPassword(window._fb.auth, email, pass)
+    .then(function(result) {
+      var user = result.user;
+      var uid = user.uid;
+      var tasks = [];
+      tasks.push(window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/name'), name));
+      if (window._fb.updateProfile) {
+        tasks.push(window._fb.updateProfile(user, { displayName: name }).catch(function(){}));
       }
+      // Keep the user logged in and return the user for the next step
+      return Promise.all(tasks).then(function() { return user; });
+    })
+    .then(function(user) {
+      // Clear any old error and show a clear success confirmation
+      err.style.color = '#16a34a';
+      err.textContent = 'Account created successfully!';
+      // Proactively update UI right away
+      if (typeof updateAuthUI === 'function') updateAuthUI(user);
+      setTimeout(function() {
+        err.textContent = '';
+        closeAuth();
+        // Go straight to the forum so the logged‑in state is visible
+        SP('forum');
+      }, 1000);
+    })
+    .catch(function(e) {
+      err.style.color = '';
+      if (e.code === 'auth/email-already-in-use') err.textContent = 'Email already registered. Sign in instead.';
+      else if (e.code === 'auth/weak-password') err.textContent = 'Password must be at least 6 characters.';
+      else err.textContent = e.message;
+    });
+}
+
+function doLogout() {
+  if (!window._firebaseReady) return;
+  window._fb.signOut(window._fb.auth);
+}
+
+function getUserDisplayName(uid) {
+  if (!window._firebaseReady) return Promise.resolve('Student');
+  return window._fb.get(window._fb.ref(window._fb.db, 'users/' + uid + '/name'))
+    .then(function(snap) { return snap.exists() ? snap.val() : 'Student'; })
+    .catch(function() { return 'Student'; });
+}
+
+// ============================================================
+// USER PROGRESS
+// ============================================================
+function loadUserProgress(uid) {
+  if (!window._firebaseReady) return;
+  var db = window._fb.db, ref = window._fb.ref, onValue = window._fb.onValue;
+  onValue(ref(db, 'users/' + uid + '/progress'), function(snap) {
+    var data = snap.val() || {};
+    modulesVisited = {};
+    var mods = data.modules || [];
+    for (var i = 0; i < mods.length; i++) modulesVisited[mods[i]] = true;
+    quizSetsCompleted = {};
+    var sets = data.quizSets || [];
+    for (var j = 0; j < sets.length; j++) quizSetsCompleted[sets[j]] = true;
+    renderProgress();
+  });
+}
+
+function saveProgress() {
+  if (!window._firebaseReady || !window._currentUser) return;
+  var uid = window._currentUser.uid;
+  window._fb.set(window._fb.ref(window._fb.db, 'users/' + uid + '/progress'), {
+    modules: Object.keys(modulesVisited),
+    quizSets: Object.keys(quizSetsCompleted)
+  });
+}
+
+function renderProgress() {
+  var mCount = Object.keys(modulesVisited).length;
+  var qCount = Object.keys(quizSetsCompleted).length * 5;
+  var ml = document.getElementById('prog-modules-label');
+  var mp = document.getElementById('prog-modules');
+  var ql = document.getElementById('prog-quiz-label');
+  var qp = document.getElementById('prog-quiz');
+  var pml = document.getElementById('profile-modules-label');
+  var pmp = document.getElementById('profile-modules');
+  var pql = document.getElementById('profile-quiz-label');
+  var pqp = document.getElementById('profile-quiz');
+  if (ml) ml.textContent = mCount + '/3';
+  if (mp) mp.style.width = Math.round(mCount / 3 * 100) + '%';
+  if (ql) ql.textContent = qCount + '/15';
+  if (qp) qp.style.width = Math.round(qCount / 15 * 100) + '%';
+  if (pml) pml.textContent = mCount + '/3';
+  if (pmp) pmp.style.width = Math.round(mCount / 3 * 100) + '%';
+  if (pql) pql.textContent = qCount + '/15';
+  if (pqp) pqp.style.width = Math.round(qCount / 15 * 100) + '%';
+
+  function setBadge(id, earned) {
+    var el = document.getElementById(id);
+    if (el) { if (earned) el.classList.add('earned'); else el.classList.remove('earned'); }
+  }
+  setBadge('badge-explorer', mCount >= 1);
+  setBadge('badge-hygiene', mCount >= 3);
+  setBadge('badge-game', !!window._gameCompleted);
+  setBadge('badge-quiz', Object.keys(quizSetsCompleted).length >= 3);
+  setBadge('badge-contrib', !!window._forumPosted);
+}
+
+// ============================================================
+// MODULE TABS
+// ============================================================
+function switchMTab(id, btn) {
+  var panels = document.querySelectorAll('.mpanel');
+  var tabs = document.querySelectorAll('.mtab');
+  for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+  for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+  var panel = document.getElementById('mtab-' + id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+  modulesVisited[id] = true;
+  saveProgress();
+  renderProgress();
+}
+
+// ============================================================
+// DRAG AND DROP
+// ============================================================
+var dragEl = null;
+
+function switchDND(id, btn) {
+  var games = document.querySelectorAll('.dnd-game');
+  var tabs = document.querySelectorAll('.dnd-tab');
+  for (var i = 0; i < games.length; i++) games[i].classList.remove('active');
+  for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('active');
+  var game = document.getElementById('dnd-' + id);
+  if (game) game.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function initDND() {
+  var labels = document.querySelectorAll('.drag-label');
+  for (var i = 0; i < labels.length; i++) {
+    (function(el) {
+      el.addEventListener('dragstart', function() { dragEl = el; el.style.opacity = '0.45'; });
+      el.addEventListener('dragend', function() { if (dragEl) dragEl.style.opacity = '1'; dragEl = null; });
+      el.addEventListener('touchstart', touchStart, { passive: true });
+      el.addEventListener('touchend', touchEnd);
+    })(labels[i]);
+  }
+  var zones = document.querySelectorAll('.drop-zone');
+  for (var j = 0; j < zones.length; j++) {
+    (function(zone) {
+      zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+      zone.addEventListener('drop', function(e) { e.preventDefault(); dropOnZone(zone); });
+      zone.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+    })(zones[j]);
+  }
+}
+
+var touchDrag = null, touchClone = null;
+function touchStart(e) {
+  touchDrag = e.currentTarget;
+  touchClone = touchDrag.cloneNode(true);
+  touchClone.style.cssText = 'position:fixed;z-index:9999;opacity:0.85;pointer-events:none;transform:scale(1.05)';
+  document.body.appendChild(touchClone);
+  moveTouchClone(e.touches[0]);
+}
+function moveTouchClone(t) {
+  if (!touchClone) return;
+  touchClone.style.left = (t.clientX - 60) + 'px';
+  touchClone.style.top = (t.clientY - 20) + 'px';
+}
+function touchEnd(e) {
+  if (touchClone) { document.body.removeChild(touchClone); touchClone = null; }
+  if (!touchDrag) return;
+  var t = e.changedTouches[0];
+  var el = document.elementFromPoint(t.clientX, t.clientY);
+  var zone = el ? el.closest('.drop-zone') : null;
+  if (zone) { dragEl = touchDrag; dropOnZone(zone); }
+  touchDrag = null; dragEl = null;
+}
+document.addEventListener('touchmove', function(e) { if (touchClone) moveTouchClone(e.touches[0]); }, { passive: true });
+
+function dropOnZone(zone) {
+  if (!dragEl) return;
+  zone.classList.remove('drag-over', 'correct', 'wrong');
+  var game = zone.closest('.dnd-game').id.replace('dnd-', '');
+  var slot = zone.querySelector('.drop-slot');
+  var prev = zone.dataset.current;
+  if (prev) {
+    var bank = document.getElementById('bank-' + game);
+    var prevEl = bank ? bank.querySelector('[data-label="' + prev + '"]') : null;
+    if (prevEl) prevEl.classList.remove('placed');
+  }
+  slot.textContent = dragEl.textContent;
+  slot.classList.add('filled');
+  zone.dataset.current = dragEl.dataset.label;
+  dragEl.classList.add('placed');
+}
+
+function checkDND(game) {
+  var grid = document.getElementById('grid-' + game);
+  var zones = grid.querySelectorAll('.drop-zone');
+  var correct = 0, total = zones.length, filled = 0;
+  for (var i = 0; i < zones.length; i++) {
+    var zone = zones[i];
+    var cur = zone.dataset.current, ans = zone.dataset.answer;
+    if (cur) {
+      filled++;
+      if (cur === ans) { zone.classList.add('correct'); zone.classList.remove('wrong'); correct++; }
+      else { zone.classList.add('wrong'); zone.classList.remove('correct'); }
+    }
+  }
+  var fb = document.getElementById('fb-' + game);
+  if (filled < total) { fb.textContent = 'Please fill all ' + total + ' slots before checking.'; return; }
+  if (correct === total) {
+    fb.textContent = 'Perfect! All ' + total + ' steps matched correctly!';
+    window._gameCompleted = true; saveProgress(); renderProgress();
+  } else {
+    fb.textContent = correct + '/' + total + ' correct. Red slots need fixing.';
+  }
+}
+
+function resetDND(game) {
+  var grid = document.getElementById('grid-' + game);
+  var bank = document.getElementById('bank-' + game);
+  var zones = grid.querySelectorAll('.drop-zone');
+  for (var i = 0; i < zones.length; i++) {
+    var zone = zones[i];
+    zone.classList.remove('correct', 'wrong', 'drag-over');
+    delete zone.dataset.current;
+    var slot = zone.querySelector('.drop-slot');
+    slot.textContent = 'Drop here'; slot.classList.remove('filled');
+  }
+  var labels = bank.querySelectorAll('.drag-label');
+  for (var j = 0; j < labels.length; j++) { labels[j].classList.remove('placed'); labels[j].style.opacity = '1'; }
+  var fb = document.getElementById('fb-' + game);
+  if (fb) fb.textContent = '';
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+var setMap = {
+  s1: { qs: ['q1','q2','q3','q4','q5'], label: 'Soap & Water' },
+  s2: { qs: ['q6','q7','q8','q9','q10'], label: 'Alcohol Rub' },
+  s3: { qs: ['q11','q12','q13','q14','q15'], label: 'When to Perform' }
+};
+var fbText = {
+  q1:  { c: 'Correct! WHO recommends 40-60 seconds for the full handwashing process.',         w: 'Incorrect. The answer is B: 40-60 seconds.' },
+  q2:  { c: 'Correct! Use the towel to turn off the tap to prevent recontamination.',          w: 'Incorrect. The answer is B: use towel to turn off tap.' },
+  q3:  { c: 'Correct! Thumbs and fingertips are the most frequently missed areas.',            w: 'Incorrect. The answer is C: thumbs and fingertips.' },
+  q4:  { c: 'Correct! Warm or cold clean running water is both acceptable.',                   w: 'Incorrect. The answer is B: warm or cold clean running water.' },
+  q5:  { c: 'Correct! Soap and water is preferred for visible soil and C. diff.',              w: 'Incorrect. The answer is C: visible soil or C. diff situations.' },
+  q6:  { c: 'Correct! Rub for 20-30 seconds until completely dry.',                           w: 'Incorrect. The answer is B: 20-30 seconds until completely dry.' },
+  q7:  { c: 'Correct! Never rinse or wipe off hand rub - let it air-dry.',                    w: 'Incorrect. The answer is C: rub until completely dry, do not rinse.' },
+  q8:  { c: 'Correct! Effective against most bacteria and enveloped viruses.',                 w: 'Incorrect. The answer is B: most bacteria and enveloped viruses.' },
+  q9:  { c: 'Correct! Apply a palmful to cover all surfaces of both hands.',                   w: 'Incorrect. The answer is B: a palmful to cover all surfaces.' },
+  q10: { c: 'Correct! Microorganisms hide under jewelry, reducing effectiveness.',             w: 'Incorrect. The answer is C: microorganisms hide under rings.' },
+  q11: { c: 'Correct! WHO identifies exactly 5 Moments for Hand Hygiene.',                    w: 'Incorrect. The answer is B: 5 WHO Moments.' },
+  q12: { c: 'Correct! Inserting a catheter is an aseptic task - Moment 2.',                   w: 'Incorrect. The answer is B: before an aseptic task (Moment 2).' },
+  q13: { c: 'Correct! Gloves have micro-perforations; hand hygiene after removal is essential.', w: 'Incorrect. The answer is B: always perform hand hygiene after gloves.' },
+  q14: { c: 'Correct! Touching patient surroundings is WHO Moment 5.',                        w: 'Incorrect. The answer is C: patient surroundings is WHO Moment 5.' },
+  q15: { c: 'Correct! An HAI is acquired during healthcare and was not present on admission.', w: 'Incorrect. The answer is C: acquired during care, not present on admission.' }
+};
+
+function switchQSet(id, btn) {
+  var panels = document.querySelectorAll('.qset-panel');
+  var btns = document.querySelectorAll('.qset-btn');
+  for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+  for (var j = 0; j < btns.length; j++) btns[j].classList.remove('active');
+  var panel = document.getElementById('qset-' + id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function sel(btn, qid, type) {
+  var grp = document.getElementById(qid);
+  if (grp.dataset.answered) return;
+  grp.dataset.answered = '1';
+  var opts = grp.querySelectorAll('.opt');
+  for (var i = 0; i < opts.length; i++) opts[i].disabled = true;
+  btn.classList.add(type === 'c' ? 'correct' : 'wrong');
+  answers[qid] = (type === 'c');
+}
+
+function submitSet(setId) {
+  var info = setMap[setId];
+  var score = 0;
+  for (var k = 0; k < info.qs.length; k++) {
+    var qid = info.qs[k];
+    var grp = document.getElementById(qid);
+    if (!grp.dataset.answered) {
+      grp.dataset.answered = '1';
+      var opts = grp.querySelectorAll('.opt');
+      for (var i = 0; i < opts.length; i++) opts[i].disabled = true;
+      answers[qid] = false;
+    }
+    var fb = document.getElementById('fb-' + qid);
+    if (answers[qid]) {
+      score++;
+      fb.className = 'qfb show ok';
+      fb.textContent = answers[qid] ? fbText[qid].c : fbText[qid].w;
+    } else {
+      fb.className = 'qfb show bad';
+      fb.textContent = fbText[qid].w;
+      var allOpts = document.getElementById(qid).querySelectorAll('.opt');
+      for (var j = 0; j < allOpts.length; j++) {
+        if (!allOpts[j].classList.contains('wrong')) allOpts[j].classList.add('correct');
+      }
+    }
+  }
+  setScores[setId] = score;
+  quizSetsCompleted[setId] = true;
+  saveProgress(); renderProgress();
+
+  var pct = score / 5 * 100;
+  var sc = document.getElementById('sc-' + setId);
+  sc.classList.add('show');
+  var scText = document.getElementById('sc-' + setId + '-text');
+  var scMsg = document.getElementById('sc-' + setId + '-msg');
+  if (scText) scText.textContent = score + ' / 5 - ' + info.label;
+  if (scMsg) scMsg.textContent = pct === 100 ? 'Perfect set!' : pct >= 60 ? 'Good - review the missed items.' : 'Keep studying and retry!';
+  setTimeout(function() {
+    var pb = document.getElementById('pb-' + setId);
+    if (pb) pb.style.width = pct + '%';
+  }, 100);
+  var subBtn = document.getElementById('sub-' + setId);
+  if (subBtn) subBtn.style.display = 'none';
+  sc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  if (setId === 's3') {
+    var total = (setScores.s1 || 0) + (setScores.s2 || 0) + (setScores.s3 || 0);
+    var fd = document.getElementById('final-score-display');
+    if (fd) { fd.style.display = 'block'; fd.textContent = 'Total Score: ' + total + ' / 15 (' + Math.round(total / 15 * 100) + '%)'; }
+  }
+}
+
+function autoSaveScore(total) {
+  var uid = window._currentUser.uid;
+  getUserDisplayName(uid).then(function(name) {
+    var db = window._fb.db, ref = window._fb.ref, set = window._fb.set;
+    set(ref(db, 'scores/' + uid), {
+      name: name, total: total,
+      s1: setScores.s1 || 0, s2: setScores.s2 || 0, s3: setScores.s3 || 0,
+      timestamp: Date.now()
+    });
+    loadLeaderboard();
+  });
+}
+
+function resetSet(setId) {
+  var info = setMap[setId];
+  for (var k = 0; k < info.qs.length; k++) {
+    var qid = info.qs[k];
+    var grp = document.getElementById(qid);
+    delete grp.dataset.answered;
+    var opts = grp.querySelectorAll('.opt');
+    for (var i = 0; i < opts.length; i++) { opts[i].disabled = false; opts[i].classList.remove('correct', 'wrong'); }
+    var fb = document.getElementById('fb-' + qid);
+    fb.className = 'qfb';
+    delete answers[qid];
+  }
+  delete setScores[setId];
+  delete quizSetsCompleted[setId];
+  var sc = document.getElementById('sc-' + setId);
+  if (sc) sc.classList.remove('show');
+  var pb = document.getElementById('pb-' + setId);
+  if (pb) pb.style.width = '0%';
+  var sub = document.getElementById('sub-' + setId);
+  if (sub) sub.style.display = '';
+  if (setId === 's3') {
+    var fd = document.getElementById('final-score-display');
+    if (fd) fd.style.display = 'none';
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function postScore() {
+  if (!window._currentUser) { openAuth(); return; }
+  var total = (setScores.s1 || 0) + (setScores.s2 || 0) + (setScores.s3 || 0);
+  autoSaveScore(total);
+  var lba = document.getElementById('lb-submit-area');
+  if (lba) lba.innerHTML = '<p style="color:var(--teal-light);font-size:.85rem;padding:.5rem 0">Score posted to leaderboard!</p>';
+  var lb = document.getElementById('leaderboard');
+  if (lb) lb.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============================================================
+// LEADERBOARD
+// ============================================================
+var lbLoaded = false;
+function loadLeaderboard() {
+  if (!window._firebaseReady) return;
+  var db = window._fb.db, ref = window._fb.ref, onValue = window._fb.onValue;
+  var query = window._fb.query, orderByChild = window._fb.orderByChild;
+  var scoresRef = query(ref(db, 'scores'), orderByChild('total'));
+  onValue(scoresRef, function(snapshot) {
+    var data = snapshot.val();
+    var list = document.getElementById('lb-list');
+    if (!list) return;
+    if (!data) { list.innerHTML = '<div class="lb-empty">No scores yet - be the first!</div>'; return; }
+    var entries = Object.values(data).sort(function(a, b) { return b.total - a.total; }).slice(0, 20);
+    var html = '';
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      var rankLabel = i === 0 ? '1st' : i === 1 ? '2nd' : i === 2 ? '3rd' : (i + 1) + 'th';
+      html += '<div class="lb-row"><div class="lb-rank">' + rankLabel + '</div>';
+      html += '<div class="lb-name">' + (e.name || 'Anonymous') + '</div>';
+      html += '<div><div class="lb-score">' + e.total + '/15</div>';
+      html += '<div class="lb-set">' + Math.round(e.total / 15 * 100) + '%</div></div></div>';
+    }
+    list.innerHTML = html;
+  });
+}
+
+// ============================================================
+// FORUM
+// ============================================================
+function loadForumPosts() {
+  if (!window._firebaseReady || !window._currentUser) return;
+  var q = window._fb.query(
+    window._fb.ref(window._fb.db, 'forum'),
+    window._fb.orderByChild('timestamp')
+  );
+  window._fb.onValue(q, function(snap) {
+    var data = snap.val();
+    var list = document.getElementById('forum-posts-list');
+    if (!list) return;
+    if (!data) {
+      list.innerHTML = '<p style="color:var(--muted);font-size:.88rem;padding:1rem 0">No posts yet -- be the first!</p>';
+      return;
+    }
+    var pairs = Object.entries(data)
+      .sort(function(a, b) { return b[1].timestamp - a[1].timestamp; })
+      .slice(0, 30);
+    var colors = ['#0d9488','#f59e0b','#8b5cf6','#ef4444','#3b82f6','#ec4899'];
+    var h = '';
+    pairs.forEach(function(pair, i) {
+      var key = pair[0], p = pair[1];
+      var color = colors[i % colors.length];
+      var init = (p.author || '?')[0].toUpperCase();
+      var d = new Date(p.timestamp);
+      var date = d.toLocaleDateString('en-PH',{month:'short',day:'numeric'})
+               + ' ' + d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+      var safe = (p.text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      var lines = safe.split('\n'); safe = lines.join('<br>');
+      h += '<div class="forum-post">';
+      h += '<div class="forum-meta">';
+      h += '<div class="avatar" style="background:'+color+'">'+init+'</div>';
+      h += '<div><div class="poster-name">'+(p.author||'Student')+'</div>';
+      h += '<div class="poster-time">'+date+'</div></div></div>';
+      h += '<div class="forum-text">'+safe+'</div>';
+      h += '<div class="forum-actions"><button class="forum-btn" onclick="likePost(\'' + key + '\')">' + (p.likes||0) + ' Likes</button></div>';      h += '</div>';
+    });
+    list.innerHTML = h;
+  });
+}
+
+function likePost(key, btn) {
+  if (!window._firebaseReady || !window._currentUser) return;
+  var db = window._fb.db, ref = window._fb.ref, get = window._fb.get, set = window._fb.set;
+  get(ref(db, 'forum/' + key + '/likes')).then(function(snap) {
+    var current = snap.exists() ? snap.val() : 0;
+    return set(ref(db, 'forum/' + key + '/likes'), current + 1);
+  });
+}
+
+function postComment() {
+  var inp = document.getElementById('comment-input');
+  var text = inp ? inp.value.trim() : '';
+  if (!text) { return; }
+  if (!window._currentUser) { openAuth(); return; }
+  if (!window._firebaseReady) {
+    var fb2 = document.getElementById('post-feedback');
+    if (fb2) { fb2.textContent = 'Not connected to Firebase. Refresh the page.'; fb2.style.color = '#ef4444'; }
+    return;
+  }
+  // Use cached name — never do an async DB read here
+  var name = window._currentUserName
+    || (window._currentUser.displayName)
+    || (window._currentUser.email || '').split('@')[0]
+    || 'Student';
+
+  var btn = document.getElementById('post-btn');
+  var fb2 = document.getElementById('post-feedback');
+  if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; btn.style.background = '#94a3b8'; }
+  if (fb2) { fb2.textContent = ''; }
+
+  window._fb.push(window._fb.ref(window._fb.db, 'forum'), {
+    author: name, text: text, timestamp: Date.now(), likes: 0
+  }).then(function() {
+    inp.value = '';
+    if (btn) { btn.disabled = false; btn.textContent = 'Post'; btn.style.background = ''; }
+    if (fb2) { fb2.textContent = 'Posted!'; fb2.style.color = '#0d9488'; setTimeout(function(){ fb2.textContent=''; }, 2500); }
+    window._forumPosted = true;
+    saveProgress(); renderProgress();
+    loadForumPosts();
+  }).catch(function(e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Post'; btn.style.background = ''; }
+    if (fb2) {
+      fb2.textContent = 'Failed: ' + (e && e.message ? e.message : 'Check Firebase rules are set to Test Mode.');
+      fb2.style.color = '#ef4444';
+    }
+    console.error('postComment error:', e);
+  });
+}
+
+// ============================================================
+// FULLSCREEN INFOGRAPHIC
+// ============================================================
+function openFS(src, emoji) {
+  var ov = document.getElementById('fs-overlay');
+  var img = document.getElementById('fs-img');
+  var em = document.getElementById('fs-emoji');
+  if (src && src !== 'undefined' && src !== '') {
+    img.src = src; img.style.display = ''; em.style.display = 'none';
+  } else {
+    img.style.display = 'none'; em.textContent = emoji || '?'; em.style.display = '';
+  }
+  ov.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFS() {
+  var ov = document.getElementById('fs-overlay');
+  if (ov) ov.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeFS(); closeAuth(); }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+  initDND();
+  var cb = document.getElementById('comment-box-area');
+  var gw = document.getElementById('guest-comment-wall');
+  if (cb) cb.style.display = 'none';
+  if (gw) gw.style.display = '';
+  renderProgress();
+
+  var commentInput = document.getElementById('comment-input');
+  if (commentInput) {
+    commentInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); postComment(); }
     });
   }
-  
-  window.addEventListener('scroll',function(){
-    var btn=document.getElementById('scroll-top-btn');
-    if(btn)btn.classList.toggle('visible',window.scrollY>400);
-  });
-  
-  setTimeout(loadLeaderboard,1400);
-  setTimeout(function(){if(window._firebaseReady)loadForumPosts();},800);
+
+  setTimeout(loadLeaderboard, 1200);
 });
 </script>
 </body>
